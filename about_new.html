@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Leodra Sint</title>
+    <!-- Tailwind CSS CDN for utility-first styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter for consistent typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom CSS for font-family and responsive font sizes using clamp */
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden; /* Prevent horizontal scroll on smaller screens */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #FDFDFD;
+            color: #000000;
+        }
+
+        /* Styles copied from index.html for header consistency */
+        /* Hamburger menu bar animation */
+        .menu-icon .bar {
+            transition: all 0.3s ease-in-out;
+        }
+        .menu-icon.open .bar:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+        }
+        .menu-icon.open .bar:nth-child(2) {
+            opacity: 0;
+        }
+        .menu-icon.open .bar:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+        }
+
+        /* Mobile navigation overlay */
+        .mobile-nav-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .mobile-nav-overlay.open {
+            transform: translateX(0);
+        }
+
+        .mobile-nav-overlay ul {
+            list-style: none;
+            padding: 0;
+            text-align: center;
+        }
+
+        .mobile-nav-overlay ul li {
+            margin: 16px 0; /* Adjusted margin for better spacing */
+        }
+
+        .mobile-nav-overlay ul li a {
+            color: white;
+            font-size: 1.6rem; /* Adjusted font size for mobile menu links */
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        /* Styles for search input in header (copied from index.html) */
+        .search-input {
+            width: 140px; /* Slightly wider for better usability */
+            padding: 6px 10px; /* Increased padding */
+            border-radius: 6px; /* More rounded corners */
+            border: 1px solid #ccc;
+            font-size: 0.875rem; /* text-sm */
+            color: #333;
+            transition: width 0.3s ease-in-out, border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background-color: #f8f8f8; /* Lighter background for better contrast */
+        }
+
+        .search-input:focus {
+            width: 200px; /* Expand on focus */
+            outline: none;
+            border-color: #555; /* Darker border on focus */
+            box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2); /* Subtle shadow on focus */
+        }
+
+        .search-button {
+            background-color: #333;
+            color: white;
+            padding: 6px 12px; /* Increased padding */
+            border-radius: 6px; /* More rounded corners */
+            font-size: 0.875rem; /* text-sm */
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+
+        .search-button:hover {
+            background-color: #555;
+            transform: translateY(-1px); /* Slight lift on hover */
+        }
+        .search-button:active {
+            transform: translateY(0); /* Press effect */
+        }
+
+        /* Message Modal specific styles (copied from index.html) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2.5rem; /* Increased padding */
+            border-radius: 0.75rem; /* More rounded corners */
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3); /* Stronger shadow */
+            max-width: 90%;
+            width: 500px; /* Slightly wider modal */
+            position: relative;
+            transform: translateY(-30px); /* More pronounced initial transform */
+            transition: transform 0.3s ease-in-out;
+        }
+
+        .modal-overlay.open .modal-content {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background-color: #000000; /* Black */
+            color: #FFFFFF; /* White */
+            padding: 12px 24px; /* Increased padding */
+            border-radius: 6px; /* More rounded corners */
+            font-weight: 600; /* Semi-bold */
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        }
+        .btn-primary:hover {
+            background-color: #336699; /* Corporate blue on hover */
+            transform: translateY(-1px); /* Slight lift on hover */
+        }
+        .btn-primary:active {
+            transform: translateY(0); /* Press effect */
+        }
+
+        /* Responsive font sizes using clamp for main titles */
+        .text-h1-responsive {
+            font-size: clamp(2rem, 6vw, 2.8rem); /* Larger for impact */
+            letter-spacing: -0.02em;
+            font-weight: 300;
+        }
+        .text-h2-responsive {
+            font-size: clamp(1.2rem, 3.5vw, 1.8rem);
+        }
+        .text-h3-responsive {
+            font-size: clamp(1rem, 3vw, 2.2rem);
+        }
+        .text-h4-responsive {
+            font-size: clamp(0.9rem, 2vw, 1.2rem);
+        }
+        .text-p-responsive {
+            font-size: clamp(0.8rem, 1.6vw, 1rem);
+            font-weight: 300;
+        }
+
+        /* Scroll Animation Styles */
+        /* Initial state: hidden and slightly moved down */
+        .scroll-animate {
+            opacity: 0;
+            transform: translateY(30px); /* Increased initial translation for more noticeable slide */
+            /* Changed transition to be longer and use ease-in-out for smoother effect */
+            transition: opacity 0.8s ease-in-out, transform 0.8s ease-in-out;
+        }
+
+        /* Animated state: visible and in original position */
+        .scroll-animate.is-visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Message Modal -->
+    <div id="messageModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="messageModalTitle">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="messageModalTitle" class="text-h3-responsive font-semibold text-gray-800">Pesan</h3>
+                <button onclick="closeMessageModal()" class="text-gray-500 hover:text-gray-700 text-3xl font-bold leading-none" aria-label="Tutup pesan">&times;</button>
+            </div>
+            <div id="messageModalContent" class="text-p-responsive text-center text-gray-700 space-y-3 mb-8">
+                <!-- Message will be inserted here by JavaScript -->
+            </div>
+            <div class="flex justify-center">
+                <button onclick="closeMessageModal()" class="btn-primary px-10">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile Navigation Overlay (Hidden by default) -->
+    <div id="mobile-nav-overlay" class="mobile-nav-overlay md:hidden" role="navigation" aria-label="Menu Mobile">
+        <button class="absolute top-4 right-4 cursor-pointer text-white text-3xl" onclick="toggleMobileMenu()" aria-label="Tutup menu mobile">
+            &times;
+        </button>
+        <div class="flex items-center mb-6">
+            <input type="text" id="mobile-search-input" placeholder="Cari halaman..." class="search-input mr-3" aria-label="Cari halaman">
+            <button onclick="performSearch('mobile-search-input')" class="search-button" aria-label="Tombol Cari">Cari</button>
+        </div>
+        <ul>
+            <li><a href="index.html" class="text-white hover:text-gray-300 transition-colors duration-200" onclick="toggleMobileMenu()">Home</a></li>
+            <li><a href="about_new.html" class="text-white hover:text-gray-300 transition-colors duration-200" onclick="toggleMobileMenu()">About</a></li>
+            <li><a href="services.html" class="text-white hover:text-gray-300 transition-colors duration-200" onclick="toggleMobileMenu()">Services</a></li>
+            <li><a href="contact.html" class="text-white hover:text-gray-300 transition-colors duration-200" onclick="toggleMobileMenu()">Contact</a></li>
+        </ul>
+    </div>
+
+    <!-- Header Section -->
+    <header class="bg-black h-16 flex items-center sticky top-0 z-50 rounded-b-md w-full shadow-md">
+        <div class="container mx-auto flex justify-between items-center px-4 sm:px-6 lg:px-8 w-full">
+            <div class="text-white text-lg font-light tracking-wider">LEODRA SINT</div>
+            <!-- Hamburger Menu Icon for Mobile -->
+            <button class="md:hidden menu-icon w-8 h-8 flex flex-col justify-around cursor-pointer p-1 rounded-sm transition-all duration-300 ease-in-out" onclick="toggleMobileMenu()" aria-label="Buka menu mobile">
+                <div class="bar w-full h-0.5 bg-white rounded-full"></div>
+                <div class="bar w-full h-0.5 bg-white rounded-full"></div>
+                <div class="bar w-full h-0.5 bg-white rounded-full"></div>
+            </button>
+            <!-- Desktop Navigation Links -->
+            <nav class="hidden md:flex items-center space-x-6" aria-label="Menu Utama">
+                <div class="flex items-center space-x-3">
+                    <input type="text" id="desktop-search-input" placeholder="Cari halaman..." class="search-input" aria-label="Cari halaman">
+                    <button onclick="performSearch('desktop-search-input')" class="search-button" aria-label="Tombol Cari">Cari</button>
+                </div>
+                <ul class="flex space-x-6">
+                    <li><a href="index.html" class="text-white text-sm font-normal hover:text-gray-300 transition-colors duration-200">Home</a></li>
+                    <li><a href="about_new.html" class="text-white text-sm font-normal hover:text-gray-300 transition-colors duration-200">About</a></li>
+                    <li><a href="services.html" class="text-white text-sm font-normal hover:text-gray-300 transition-colors duration-200">Services</a></li>
+                    <li><a href="contact.html" class="text-white text-sm font-normal hover:text-gray-300 transition-colors duration-200">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main content for the About page -->
+    <main class="flex-grow flex flex-col items-center p-8">
+        <section class="container mx-auto px-3 sm:px-5 lg:px-6 max-w-4xl py-8 md:py-14 scroll-animate">
+            <h1 class="text-h1-responsive text-black text-center mb-16">Tentang Leodra Sint: The Dealer's Game</h1>
+            <div class="flex flex-col md:flex-row items-center justify-center md:justify-between gap-8">
+                <div class="w-full md:w-1/2 text-center md:text-left">
+                    <h3 class="text-h3-responsive text-black font-semibold mb-4">Visi Kami</h3>
+                    <p class="text-p-responsive text-gray-700 leading-relaxed mb-4">
+                        Leodra Sint didirikan dengan visi untuk mengungkap dinamika tersembunyi di balik pasar keuangan dan industri perjudian. Kami percaya bahwa dengan memahami cara "dealer" beroperasi, baik di kasino maupun di lembaga keuangan besar, individu dapat membuat keputusan yang lebih cerdas dan melindungi diri dari sistem yang dirancang untuk menguras keuntungan mereka.
+                    </p>
+                    <p class="text-p-responsive text-gray-700 leading-relaxed">
+                        Kami bertujuan untuk memberdayakan Anda dengan pengetahuan dan perspektif yang diperlukan untuk "berpikir seperti dealer, bukan seperti pemain."
+                    </p>
+                </div>
+                <div class="w-full md:w-1/2 flex justify-center md:justify-end">
+                    <img class="w-full max-w-[18rem] md:max-w-[22rem] lg:max-w-[26rem] h-auto rounded-lg shadow-md"
+                        src="https://images.pexels.com/photos/425160/pexels-photo-425160.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                        alt="Visi Kami"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='https://placehold.co/700x500/FF0000/FFFFFF?text=Image+Error';">
+                </div>
+            </div>
+        </section>
+
+        <section class="container mx-auto px-3 sm:px-5 lg:px-6 max-w-4xl py-8 md:py-14 bg-gray-50 rounded-lg shadow-inner mt-8 scroll-animate">
+            <div class="flex flex-col-reverse md:flex-row items-center justify-center md:justify-between gap-8">
+                <div class="w-full md:w-1/2 flex justify-center md:justify-start">
+                    <img class="w-full max-w-[18rem] md:max-w-[22rem] lg:max-w-[26rem] h-auto rounded-lg shadow-md"
+                        src="https://images.pexels.com/photos/340981/pexels-photo-340981.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+                        alt="Misi Kami"
+                        loading="lazy"
+                        onerror="this.onerror=null;this.src='https://placehold.co/700x500/FF0000/FFFFFF?text=Image+Error';">
+                </div>
+                <div class="w-full md:w-1/2 text-center md:text-right">
+                    <h3 class="text-h3-responsive text-black font-semibold mb-4">Misi Kami</h3>
+                    <p class="text-p-responsive text-gray-700 leading-relaxed mb-4">
+                        Misi kami adalah menyediakan analisis mendalam dan perspektif kritis tentang bagaimana sistem keuangan dan perjudian dirancang untuk menguntungkan para pemain besar. Kami menyajikan informasi ini dengan cara yang mudah dipahami, membantu Anda mengidentifikasi pola, memahami risiko, dan mengembangkan strategi yang lebih efektif.
+                    </p>
+                    <p class="text-p-responsive text-gray-700 leading-relaxed">
+                        Kami berkomitmen untuk transparansi dan edukasi, memastikan Anda memiliki alat untuk menavigasi dunia yang kompleks ini dengan percaya diri.
+                    </p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section (Copied from index.html for consistency) -->
+    <footer class="bg-black py-10 md:py-16 mt-10 rounded-t-md w-full shadow-lg scroll-animate">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+            <h3 class="text-white text-h2-responsive font-semibold text-center mb-8">Think like a dealer, not like a player.</h3>
+            <div class="bg-white text-black p-5 md:p-8 rounded-lg shadow-xl max-w-screen-md mx-auto">
+                <p class="text-black text-p-responsive font-semibold mb-2"><strong>Bagaimana Kasino Vegas Membuat Pemain Rugi & Mirip dengan Broker Curang</strong></p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Baik kasino di Las Vegas maupun beberapa broker "nakal" memiliki strategi tersembunyi untuk memastikan keuntungan mereka, seringkali dengan mengorbankan pemain atau trader yang menguntungkan. Meskipun metode mereka berbeda, prinsip dasarnya sama: memanipulasi probabilitas dan informasi untuk keuntungan mereka.</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2"><strong>Alur Kasino Vegas Membuat Pemain Rugi</strong></p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Kasino tidak perlu "curang" secara terang-terangan untuk menang; model bisnis mereka dibangun di atas keunggulan statistik yang disebut "house edge". Ini adalah persentase keuntungan jangka panjang yang dimiliki kasino atas pemain. Berikut adalah alurnya:</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Matematika yang Tidak Menguntungkan Pemain (House Edge):</p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Setiap permainan kasino dirancang agar kasino selalu memiliki sedikit keuntungan matematis dalam jangka panjang. Misalnya, di rolet, ada angka 0 (dan kadang 00), yang berarti peluang Anda untuk memenangkan taruhan merah/hitam sedikit kurang dari 50%. Meskipun Anda mungkin menang beberapa putaran, secara statistik, kasino akan selalu di atas angin seiring waktu.</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Variasi dan Keberuntungan Jangka Pendek:</p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Kasino mengandalkan fakta bahwa dalam jangka pendek, keberuntungan bisa berpihak pada pemain. Ini menciptakan ilusi bahwa pemain bisa menang besar, mendorong mereka untuk terus bermain. Kemenangan sesekali ini memicu dopamin dan membuat pemain merasa "beruntung," mendorong mereka untuk terus bertaruh.</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Psikologi dan Lingkungan yang Memikat:</p>
+                <ul class="list-disc list-inside text-black text-p-responsive font-extralight leading-relaxed mb-4 pl-4">
+                    <li><strong>Desain Tanpa Jendela dan Jam:</strong> Kasino dirancang untuk membuat pemain lupa waktu, mendorong mereka untuk bermain lebih lama.</li>
+                    <li><strong>Atmosfer Glamor dan Hiburan:</strong> Suasana yang mewah, musik, dan minuman gratis menciptakan lingkungan yang nyaman dan mendorong pengeluaran.</li>
+                    <li><strong>Kompensasi dan Hadiah (Comp):</strong> Kasino memberikan hadiah kecil (makanan gratis, kamar murah) kepada pemain yang kalah dalam jumlah besar atau bermain untuk waktu yang lama, membuat mereka merasa dihargai dan mendorong kunjungan kembali.</li>
+                </ul>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Kontrol Informasi dan Aturan Main:</p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Kasino sepenuhnya mengontrol aturan main, pembayaran, dan informasi yang diberikan kepada pemain. Pemain seringkali tidak menyadari house edge yang sebenarnya atau bagaimana probabilitas bekerja melawan mereka.</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Pengelolaan Keuangan Pemain:</p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Kasino mendorong pemain untuk mengambil lebih banyak uang tunai, menyediakan ATM di lokasi, dan menawarkan fasilitas kredit, semuanya dirancang untuk membuat pemain terus berjudi bahkan setelah mereka kehabisan uang tunai yang mereka bawa.</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Koneksi dengan Broker Curang yang Mencurangi Trader Profitabel</p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Meskipun ranahnya berbeda, modus operasi broker nakal yang mencurangi trader profitabel memiliki kemiripan filosofis dengan cara kasino beroperasi. Perbedaannya adalah broker tersebut melakukan tindakan yang lebih eksplisit dan seringkali ilegal.</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Manipulasi Data dan Eksekusi (House Edge Tersembunyi):</p>
+                <ul class="list-disc list-inside text-black text-p-responsive font-extralight leading-relaxed mb-4 pl-4">
+                    <li><strong>Slippage yang Tidak Adil:</strong> Broker sengaja menerapkan slippage negatif yang besar pada pesanan trader yang profitabel, atau bahkan pada semua pesanan. Ini berarti harga eksekusi jauh lebih buruk dari harga yang diharapkan trader, mengikis keuntungan.</li>
+                    <li><strong>Requotes dan Penolakan Pesanan:</strong> Pesanan trader yang profitabel, terutama pada saat volatilitas tinggi, seringkali ditolak atau di-requote dengan harga yang kurang menguntungkan. Ini mengganggu strategi trading dan menyebabkan frustrasi.</li>
+                    <li><strong>Pemblokiran Penarikan Dana:</strong> Ini adalah bentuk kecurangan yang paling ekstrem. Ketika trader berhasil mengumpulkan keuntungan yang signifikan, broker membuat berbagai alasan (masalah verifikasi, masalah sistem) untuk menunda atau menolak penarikan dana.</li>
+                </ul>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Intervensi pada Order Flow (Memprediksi Gerakan Pemain):</p>
+                <ul class="list-disc list-inside text-black text-p-responsive font-extralight leading-relaxed mb-4 pl-4">
+                    <li><strong>Dealing Desk (DD) vs. Non-Dealing Desk (NDD):</strong> Broker DD seringkali mengambil posisi berlawanan dengan trader mereka. Jika seorang trader sangat profitabel, broker DD mungkin akan menempatkan "stop-loss hunting" (memicu stop-loss trader secara artifisial) atau menahan harga yang menguntungkan.</li>
+                    <li><strong>Manipulasi Harga:</strong> Broker dapat memanipulasi feed harga mereka sendiri, terutama saat ada berita penting, untuk memicu stop-loss atau menunda take-profit trader.</li>
+                </ul>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Psikologi dan Lingkungan yang Menjebak:</p>
+                <ul class="list-disc list-inside text-black text-p-responsive font-extralight leading-relaxed mb-4 pl-4">
+                    <li><strong>Bonus dan Promosi Palsu:</strong> Banyak broker nakal menawarkan bonus deposit yang sangat besar, tetapi dengan syarat dan ketentuan penarikan yang hampir mustahil untuk dipenuhi. Ini mengunci dana trader dan mendorong mereka untuk terus trading.</li>
+                    <li><strong>Edukasi yang Menyesatkan:</strong> Beberapa broker menyediakan "edukasi" yang pada dasarnya mendorong gaya trading yang tidak sehat atau terlalu agresif, yang pada akhirnya menguntungkan broker karena trader akan lebih sering kalah.</li>
+                </ul>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Kurangnya Transparansi dan Regulasi yang Lemah:</p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Broker nakal sering beroperasi di yurisdiksi dengan regulasi yang longgar atau sama sekali tanpa regulasi. Ini memungkinkan mereka untuk melakukan praktik tidak etis tanpa takut dihukum. Mereka tidak memberikan laporan transparan tentang eksekusi order atau aliran dana.</p>
+
+                <p class="text-black text-p-responsive font-semibold mb-2">Memanfaatkan Emosi Trader:</p>
+                <p class="text-black text-p-responsive font-extralight leading-relaxed mb-4">Sama seperti kasino, broker nakal memanfaatkan emosi seperti keserakahan dan ketakutan. Mereka tahu bahwa trader yang emosional cenderung membuat keputusan impulsif yang menguntungkan broker.</p>
+
+                <p class="text-black text-p-responsive font-extralight leading-relaxed">Secara ringkas, baik kasino maupun broker curang bertujuan untuk mendapatkan keuntungan jangka panjang. Kasino melakukannya melalui keunggulan matematis yang inheren dalam permainan mereka dan manipulasi lingkungan psikologis. Broker curang, di sisi lain, secara aktif memanipulasi kondisi trading, data, dan terkadang bahkan menahan dana untuk memastikan mereka "menang" melawan trader yang menguntungkan. Kedua entitas ini mengandalkan fakta bahwa mayoritas "pemain" akan kalah dalam jangka panjang, entah karena matematika atau karena manipulasi sistem.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // JavaScript for mobile menu toggle
+        function toggleMobileMenu() {
+            const mobileNavOverlay = document.getElementById('mobile-nav-overlay');
+            const menuIcon = document.querySelector('.menu-icon'); // Select the hamburger icon
+            mobileNavOverlay.classList.toggle('open');
+            menuIcon.classList.toggle('open'); // Toggle 'open' class on the menu icon for animation
+            document.body.classList.toggle('overflow-hidden'); // Prevent scrolling when menu is open
+        }
+
+        // Function to open the custom message modal
+        function openMessageModal(message) {
+            const messageModal = document.getElementById('messageModal');
+            const messageModalContent = document.getElementById('messageModalContent');
+            messageModalContent.innerHTML = `<p>${message}</p>`;
+            messageModal.classList.add('open');
+            document.body.classList.add('overflow-hidden');
+            messageModal.querySelector('button').focus(); // Set focus for accessibility
+        }
+
+        // Function to close the custom message modal
+        function closeMessageModal() {
+            const messageModal = document.getElementById('messageModal');
+            messageModal.classList.remove('open');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        // Function to handle search navigation - now performs a Google search
+        function performSearch(inputId) {
+            const searchInput = document.getElementById(inputId);
+            const query = searchInput.value.trim();
+
+            if (query) {
+                // Perform a Google search in a new tab
+                window.open(`https://www.google.com/search?q=${encodeURIComponent(query)}`, '_blank');
+            } else {
+                openMessageModal("Silakan masukkan kata kunci pencarian.");
+            }
+
+            // Close mobile menu if search was performed from there
+            if (inputId === 'mobile-search-input' && document.getElementById('mobile-nav-overlay').classList.contains('open')) {
+                toggleMobileMenu();
+            }
+        }
+
+        // Add event listeners for 'Enter' key on search inputs
+        document.addEventListener('DOMContentLoaded', () => {
+            const desktopSearchInput = document.getElementById('desktop-search-input');
+            if (desktopSearchInput) {
+                desktopSearchInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        performSearch('desktop-search-input');
+                    }
+                });
+            }
+
+            const mobileSearchInput = document.getElementById('mobile-search-input');
+            if (mobileSearchInput) {
+                mobileSearchInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        performSearch('mobile-search-input');
+                    }
+                });
+            }
+
+            // Intersection Observer for scroll animations
+            const animateElements = document.querySelectorAll('.scroll-animate');
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        // Add 'is-visible' when element enters viewport
+                        entry.target.classList.add('is-visible');
+                    } else {
+                        // Remove 'is-visible' when element leaves viewport to allow re-animation on scroll back up
+                        entry.target.classList.remove('is-visible');
+                    }
+                });
+            }, {
+                rootMargin: '0px',
+                threshold: 0.1 // Trigger when 10% of the element is visible
+            });
+
+            animateElements.forEach(element => {
+                observer.observe(element);
+            });
+        });
+    </script>
+</body>
+</html>

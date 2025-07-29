@@ -1,0 +1,2420 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk & Reward Calculator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <!-- jsPDF and html2canvas for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Custom styles based on user's provided CSS */
+        body { font-family: 'Inter', sans-serif; background-color: #fcfcfc; color: #333; font-size: 0.8125rem; padding: 0; }
+        .container-wrapper { background-color: #ffffff; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); border-radius: 12px; border: 1px solid #eeeeee; padding: 1.5rem; margin-top: 6rem; /* Increased margin to accommodate larger header */ margin-left: auto; margin-right: auto; width: 100%; max-width: 1536px; }
+        .header-global { position: fixed; top: 0; left: 0; right: 0; padding: 2rem 2.5rem; /* Increased padding for larger header */ background-color: rgba(255, 255, 255, 0.8); /* White and transparent */ backdrop-filter: blur(10px); border-bottom: 1px solid rgba(0, 0, 0, 0.1); display: flex; align-items: center; justify-content: space-between; z-index: 50; color: #333; /* Black text */ }
+        .header-section { background-color: rgba(247, 247, 247, 0.8); border-bottom: 1px solid #e8e8e8; padding: 1.75rem 1.5rem; margin-left: -1.5rem; margin-right: -1.5rem; }
+        .text-primary { color: #2a2a2a; }
+        .input-label { color: #5a5a5a; font-weight: 500; font-size: 0.75rem; }
+        .input-field, .select-field { border: 1px solid #e0e0e0; background-color: #ffffff; color: #333; border-radius: 6px; padding: 0.55rem 0.8rem; transition: border-color 0.2s, box-shadow 0.2s; font-size: 0.75rem; }
+        .input-field:focus, .select-field:focus { border-color: #bbbbbb; outline: none; box-shadow: 0 0 0 2px rgba(187, 187, 187, 0.2); }
+        .input-group-percent span { background-color: #f0f0f0; border: 1px solid #e0e0e0; border-left: none; border-radius: 0 6px 6px 0; color: #5a5a5a; padding: 0.55rem 0.8rem; font-size: 0.75rem; }
+        .buy-button, .sell-button { border: 1px solid #e0e0e0; background-color: #f9f9f9; color: #5a5a5a; border-radius: 6px; transition: background-color 0.2s, color 0.2s, border-color 0.2s; font-size: 0.75rem; padding: 0.55rem 0.8rem; }
+        .buy-button.active { background-color: #eafaea; color: #28a745; border-color: #c9ecc9; font-weight: 600; }
+        .sell-button.active { background-color: #faeaea; color: #dc3545; border-color: #ecc9c9; font-weight: 600; }
+
+        /* --- Perubahan untuk Tombol Aksi (Add, Calculate) --- */
+        .action-button { background-color: #222222; color: #ffffff; border: 1px solid #111111; border-radius: 6px; font-weight: 600; padding: 0.6rem 1.1rem; transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); font-size: 0.8125rem; }
+        .action-button:hover { background-color: #3a3a3a; border-color: #222222; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15); }
+        .action-button:active { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+        /* --- End Perubahan Tombol Aksi --- */
+
+        /* New style for the "Tambah Foto" button */
+        .light-action-button { background-color: #e0e0e0; color: #222222; border: 1px solid #cccccc; border-radius: 6px; font-weight: 300; padding: 0.4rem 0.8rem; font-size: 0.75rem; transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; box-shadow: 0 1px 3px (0, 0, 0, 0.08); }
+        .light-action-button:hover { background-color: #d0d0d0; border-color: #bbbbbb; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+        .light-action-button:active { box-shadow: 0 0 2px rgba(0, 0, 0, 0.05); }
+
+        /* New style for the "Hapus Data" button */
+        .delete-data-button { background-color: transparent; color: #dc3545; border: none; font-weight: 300; font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; transition: color 0.2s; }
+        .delete-data-button:hover { color: #c82333; }
+
+        /* New style for the "Unggah Data" button */
+        .upload-data-button { background-color: #e0e0e0; color: #222222; border: 1px solid #cccccc; border-radius: 6px; font-weight: 300; font-size: 0.75rem; padding: 0.25rem 0.5rem; cursor: pointer; transition: background-color 0.2s, border-color 0.2s, box-shadow 0.2s; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); }
+        .upload-data-button:hover { background-color: #d0d0d0; border-color: #bbbbbb; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); }
+        .upload-data-button:active { box-shadow: 0 0 2px rgba(0, 0, 0, 0.05); }
+
+        .delete-row-btn { color: #999; transition: color 0.2s; }
+        .delete-row-btn:hover { color: #f44336; }
+        .results-table { border-collapse: collapse; width: 100%; }
+        .results-table th, .results-table td { padding: 6px 8px; text-align: center; border-bottom: 1px solid #f2f2f2; font-size: 0.6rem; font-weight: 300; white-space: nowrap; }
+        .results-table th { background-color: #e0e0e0; color: #333; font-weight: 300; text-transform: uppercase; font-size: 0.6rem; text-align: center; position: sticky; top: 0; z-index: 10; }
+        .results-table td:nth-child(1), .results-table td:nth-child(2) { text-align: left; }
+        .results-table td:nth-child(14) { text-align: center; font-weight: 300; color: #222; font-size: 0.6rem; }
+        .results-table tbody tr:last-child td { border-bottom: none; }
+        .results-table tbody tr:hover { background-color: #fdfdfd; }
+        .positive-value { color: #28a745; font-weight: 500; }
+        .negative-value { color: #dc3545; font-weight: 500; }
+        .neutral-value { color: #333; }
+        .detail-section { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 1.2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.05); font-size: 0.75rem; }
+        .detail-section.active { opacity: 1; transform: translateY(0); }
+        .detail-label { font-weight: 600; color: #2a2a2a; margin-right: 0.5rem; }
+        .detail-value { color: #555; }
+        .error-message { background-color: #fdeaea; color: #dc3545; border: 1px solid #f5c6cb; border-radius: 6px; padding: 8px; font-size: 0.75rem; margin-top: 1rem; }
+        /* Custom scrollbar for input rows container */
+        #inputRowsContainer { max-height: 400px; overflow-y: auto; padding-right: 8px; margin-bottom: 1.5rem; }
+        #inputRowsContainer::-webkit-scrollbar { width: 8px; }
+        #inputRowsContainer::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 10px; }
+        #inputRowsContainer::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 10px; }
+        #inputRowsContainer::-webkit-scrollbar-thumb:hover { background: #b0b0b0; }
+        /* Styles for the table cell containing action buttons in active plans */
+        .action-buttons-cell { display: flex; justify-content: center; align-items: center; gap: 0.4rem; }
+        /* Styles for the new action buttons in active plans */
+        .action-button-small { background-color: #222222; color: white; padding: 0.3rem 0.6rem; border-radius: 4px; font-weight: 500; font-size: 0.6rem; transition: background-color 0.2s, opacity 0.2s; white-space: nowrap; border: 1px solid #111111; }
+        .action-button-small:hover { opacity: 0.8; }
+
+        /* Specific font size for main titles */
+        h1.text-3xl { font-size: 1.25rem; font-weight: 200; }
+        /* Adjusted font size for h2 titles in statistics sections */
+        h2.text-lg { font-size: 0.8rem; font-weight: 300; }
+        /* New style for modal title */
+        #photoUploadModal h3, #deletePhotoModal h3, #uploadConfirmModal h3 { font-size: 0.9rem; font-weight: 600; color: #2a2a2a; }
+        p.text-sm { font-size: 0.7rem; font-weight: 200; }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 640px) {
+            .container-wrapper { padding: 1rem; margin-top: 4rem; }
+            .header-global {
+                padding: 1.25rem 1.5rem; /* Further increased padding for mobile header */
+            }
+            /* Smaller font size for all text in header on mobile */
+            .header-global span,
+            .header-global a {
+                font-size: 0.65rem; /* Smaller font size for all text in header on mobile */
+            }
+            .header-section { padding: 1.5rem 1rem; margin-left: -1rem; margin-right: -1rem; }
+            h1.text-3xl { font-size: 1.1rem; } /* Adjusted from 1rem */
+            h2.text-lg { font-size: 0.8rem; } /* Reverted to 0.8rem */
+            .input-row { padding: 1rem; }
+            .input-label, .input-field, .select-field, .input-group-percent span, .buy-button, .sell-button, .action-button, .results-table th, .results-table td { font-size: 0.75rem; }
+            .action-button { padding: 0.5rem 0.8rem; }
+            .action-button-small { padding: 0.2rem 0.4rem; font-size: 0.6rem; }
+            .grid-cols-1.sm:grid-cols-2.md:grid-cols-3.lg:grid-cols-6 { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+            .top-left-photo-section { flex-direction: column; align-items: center; gap: 0.5rem; padding-left: 0; padding-top: 0; }
+            /* Adjusted for mobile: align items to start (left) */
+            #executedTradingPlansSection > div.flex { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+            #executedTradingPlansSection > div.flex > h2 { margin-bottom: 0; }
+            /* Adjusted for mobile: justify content to start (left) */
+            #executedTradingPlansSection > div.flex > div.flex { flex-direction: row; width: 100%; justify-content: flex-start; }
+            /* Mobile specific photo gallery adjustments */
+            .photo-gallery-container { width: 100%; max-width: none; }
+            #photoCarousel { width: 100%; height: 200px; /* Adjust height for mobile if needed */ }
+            #photoSlides img { width: 100%; } /* Ensure images take full width of carousel */
+        }
+
+        /* Ensure tables are horizontally scrollable on small screens */
+        .overflow-x-auto { overflow-x: auto; }
+        /* Styles for download buttons */
+        .download-buttons { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; display: none; }
+        .download-button { background-color: #222222; color: #ffffff; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 500; font-size: 0.75rem; cursor: pointer; border: none; }
+        .download-button.pdf { background-color: #222222; }
+        .download-button:hover { opacity: 0.9; }
+        .download-button:active { transform: translateY(0); }
+
+        /* Styles for photo gallery container and delete icon */
+        .photo-gallery-container {
+            position: relative;
+            display: block;
+            width: 100%; /* Make it take full available width */
+            max-width: 400px; /* Set a max-width for larger screens */
+            margin: 0 auto; /* Center the container */
+        }
+        #photoCarousel {
+            width: 100%; /* Make it take full width of its container */
+            aspect-ratio: 1 / 1; /* Maintain a square aspect ratio */
+            height: auto; /* Allow height to adjust based on width and aspect ratio */
+            border-radius: 8px;
+            border: 1px solid #cccccc;
+            object-fit: cover;
+            margin: 0 auto; /* Center the carousel */
+            cursor: pointer; /* Add cursor pointer to indicate clickability */
+        }
+        #photoSlides {
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+            height: 100%;
+        }
+        #photoSlides img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            flex-shrink: 0; /* Prevent images from shrinking */
+        }
+        .delete-photo-icon { position: absolute; top: -12px; right: -12px; background-color: #222222; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; cursor: pointer; z-index: 10; transition: background-color 0.2s; }
+        .delete-photo-icon:hover { background-color: #3a3a3a; }
+
+        /* New styles for the top-left photo and button container */
+        .top-left-photo-section { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
+
+        @media (min-width: 641px) {
+            .top-left-photo-section { flex-direction: row; justify-content: center; }
+            .photo-gallery-container { max-width: 400px; } /* Keep max-width for larger screens */
+            #executedTradingPlansSection > div.flex { flex-direction: row; justify-content: space-between; }
+            #executedTradingPlansPlansSection > div.flex > div.flex { width: auto; }
+        }
+
+        /* Added style for executed plans table container to enable vertical scrolling */
+        #executedPlansTableContainer { max-height: 300px; overflow-y: auto; border-radius: 0.5rem; border: 1px solid #e0e0e0; }
+        /* Custom scrollbar for executed plans table container */
+        #executedPlansTableContainer::-webkit-scrollbar { width: 8px; }
+        #executedPlansTableContainer::-webkit-scrollbar-track { background: #f0f0f0; border-radius: 10px; }
+        #executedPlansTableContainer::-webkit-scrollbar-thumb { background: #d0d0d0; border-radius: 10px; }
+        #executedPlansTableContainer::-webkit-scrollbar-thumb:hover { background: #b0b0b0; }
+
+        /* --- Animasi Scroll (Fade-in-up) --- */
+        .scroll-animate-section { opacity: 0; transform: translateY(50px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+        .scroll-animate-section.scrolled-into-view { opacity: 1; transform: translateY(0); }
+
+        /* Adjusted Pie Chart Container for a balanced size */
+        #pieChartContainer { min-height: 220px; max-width: 350px; margin: 0 auto; }
+
+        /* Ensure canvas itself is responsive within its container */
+        #assetSuccessPieChart { width: 100% !important; height: auto !important; }
+
+        /* Styling for the new informational text section */
+        .info-section { background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 2rem; margin-top: 2rem; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); }
+        .info-section h2 { font-size: 1.25rem; font-weight: 500; color: #2a2a2a; margin-bottom: 1rem; border-bottom: 1px solid #e8e8e8; padding-bottom: 0.5rem; }
+        .info-section h3 { font-size: 1rem; font-weight: 600; color: #333; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        .info-section p { font-size: 0.875rem; font-weight: 300; color: #555; line-height: 1.6; margin-bottom: 1rem; }
+        .info-section ul { list-style-type: disc; margin-left: 1.5rem; margin-bottom: 1rem; }
+        .info-section ul li { font-size: 0.875rem; font-weight: 300; color: #555; margin-bottom: 0.5rem; }
+        .info-section strong { font-weight: 500; color: #333; }
+
+        /* New style for numbers in Overall Summary Statistics */
+        #overallSummaryStatisticsSection p.text-base { font-weight: 300; color: #222222; }
+        #overallSummaryStatisticsSection p.text-base.negative-summary-value { color: #dc3545; }
+
+        /* New style for numbers in Risk and Reward Statistics */
+        #riskRewardStatisticsSection p.text-base { font-weight: 300; color: #222222; }
+        #riskRewardStatisticsSection p.text-lg { font-weight: 300; color: #222222; }
+
+        /* Modal specific styles */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 100; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+        .modal.show { opacity: 1; visibility: visible; }
+        .modal-content { background-color: #ffffff; padding: 2rem; border-radius: 12px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); width: 90%; max-width: 600px; /* Increased max-width for larger modal content */ position: relative; transform: translateY(-20px); transition: transform 0.3s ease; }
+        .modal.show .modal-content { transform: translateY(0); }
+        .modal-close-button { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999; }
+        .modal-close-button:hover { color: #333; }
+
+        /* Adjustments for image cropping canvas in modal */
+        #photoUploadModal .flex.justify-center.items-center {
+            width: 100%; /* Take full width of modal content */
+            height: 300px; /* Adjust height as needed */
+            margin: 0 auto;
+        }
+        #imageCanvas {
+            width: 100%; /* Make canvas responsive within its container */
+            height: 100%;
+            display: block; /* Remove extra space below canvas */
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+    <!-- Global Header for the entire page (fixed at top) -->
+    <div class="header-global">
+        <div class="flex items-center gap-4">
+            <span class="text-sm font-light">Beranda Utama</span> <!-- Adjusted font size -->
+        </div>
+        <div class="text-center absolute left-1/2 -translate-x-1/2">
+            <span id="currentDateHeader" class="text-sm"></span> <!-- Adjusted font size -->
+            <span id="currentTimeHeader" class="text-sm"></span> <!-- Adjusted font size -->
+        </div>
+        <!-- Moved "Investasi" link next to "Home" -->
+        <div class="flex items-center gap-4">
+            <a href="investasi.html" class="text-sm font-light hover:underline">Investasi</a> <!-- Adjusted font size -->
+            <a href="index.html" class="text-sm font-light hover:underline">Home</a> <!-- Adjusted font size -->
+        </div>
+    </div>
+
+    <div class="container-wrapper rounded-xl shadow-lg">
+        <!-- New section for "Tambah Foto" and Profile Pic below the fixed header, top-left -->
+        <section class="top-left-photo-section scroll-animate-section">
+            <div class="photo-gallery-container relative w-full max-w-sm mx-auto">
+                <!-- Added onclick to photoCarousel to trigger file input -->
+                <div id="photoCarousel" class="relative overflow-hidden rounded-lg border border-gray-300 bg-gray-100 flex items-center justify-center">
+                    <div id="photoSlides" class="flex transition-transform duration-300 ease-in-out h-full">
+                        <!-- Images will be dynamically loaded here -->
+                        <img src="https://placehold.co/240x240/cccccc/ffffff?text=Add+Photos" alt="Placeholder" class="w-full h-full object-cover flex-shrink-0">
+                    </div>
+                    <button id="prevPhotoBtn" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hidden z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" /></svg>
+                    </button>
+                    <button id="nextPhotoBtn" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hidden z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    </button>
+                    <div id="photoCounter" class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded-full hidden"></div>
+                    <span id="deletePhotoIcon" class="delete-photo-icon hidden">X</span>
+                </div>
+                <!-- Removed the "Tambah Foto" button -->
+            </div>
+        </section>
+
+        <header class="header-section text-center mb-8 rounded-t-xl scroll-animate-section">
+            <h1 class="text-3xl font-extralight text-primary mb-2">Risk & Reward Calculator</h1>
+            <p class="text-gray-600 text-sm font-extralight">
+                <span id="currentDate"></span>, <span id="currentTime"></span>
+            </p>
+        </header>
+
+        <!-- Notification for trade limits -->
+        <div id="limitNotification" class="hidden text-center p-3 rounded-lg error-message mb-4"></div>
+
+        <section id="calculatorInputs" class="mb-8 scroll-animate-section">
+            <div id="inputRowsContainer" class="space-y-6">
+                <!-- Input rows will be dynamically added here -->
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 mt-6">
+                <button id="addInputRowBtn" class="w-full sm:flex-1 action-button">
+                    Tambah Baris Input
+                </button>
+                <button id="calculateAllBtn" class="w-full sm:flex-1 action-button">
+                    Hitung Semua
+                </button>
+            </div>
+        </section>
+
+        <!-- New section for Calculated/New Trading Plans -->
+        <section id="newTradingPlansSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-extralight text-primary mb-4 pb-2 border-b border-gray-200">Rencana Trading Baru</h2>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th class="rounded-tl-lg">Aset</th><th>Trade</th><th>Balance Akun</th><th>Waktu Masuk</th><th>Open Price</th><th>SL Price</th><th>TP Price</th><th>Pending Pips</th><th>SL Pips/Points</th><th>TP Pips/Points</th><th>R:R Pips</th><th>R:R %</th><th>Lot/Units</th><th>Nett SL</th><th>Nett TP</th><th>Catatan</th><th class="rounded-tr-lg">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calculatedPlansBody">
+                        <tr><td colspan="17" class="py-4 text-center text-gray-500">Belum ada rencana trading baru.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Existing section, renamed to Rencana Trading Aktif -->
+        <section id="runningTradingPlansSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-extralight text-primary mb-4 pb-2 border-b border-gray-200">Rencana Trading Aktif</h2>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th class="rounded-tl-lg">Aset</th><th>Trade</th><th>Balance Akun</th><th>Waktu Masuk</th><th>Open Price</th><th>SL Price</th><th>TP Price</th><th>Pending Pips</th><th>SL Pips/Points</th><th>TP Pips/Points</th><th>R:R Pips</th><th>R:R %</th><th>Lot/Units</th><th>Nett SL</th><th>Nett TP</th><th>Catatan</th><th class="rounded-tr-lg">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="runningPlansBody">
+                        <tr><td colspan="17" class="py-4 text-center text-gray-500">Belum ada rencana trading aktif.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div id="calculationDetails" class="mt-6 hidden">
+                <!-- Calculation details will be displayed here, but hidden by default now -->
+            </div>
+        </section>
+
+        <section id="executedTradingPlansSection" class="mt-8 scroll-animate-section">
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-4 pb-2 border-b border-gray-200">
+                <h2 class="text-lg font-extralight text-primary mb-2 sm:mb-0">Rencana Trading Selesai</h2>
+                <div class="flex gap-3 mt-2 sm:mt-0">
+                    <button id="uploadDataBtn" class="upload-data-button">Unggah Data</button>
+                    <button id="deleteAndExportDataBtn" class="delete-data-button">Hapus Data</button>
+                </div>
+            </div>
+            <!-- Added a wrapper div for vertical scrolling -->
+            <div id="executedPlansTableContainer" class="overflow-x-auto">
+                <table class="results-table" id="executedPlansTable">
+                    <thead>
+                        <tr>
+                            <th class="rounded-tl-lg">Aset</th><th>Trade</th><th>Balance Akun</th><th>Waktu Masuk</th><th>Open Price</th><th>SL Price</th><th>TP Price</th><th>Pending Pips</th><th>SL Pips/Points</th><th>TP Pips/Points</th><th>R:R Pips</th><th>R:R %</th><th>Lot/Units</th><th>Nett SL</th><th>Nett TP</th><th>Catatan</th><th>Hasil</th><th class="rounded-tr-lg">Waktu Keluar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="executedPlansBody">
+                        <tr><td colspan="18" class="py-4 text-center text-gray-500">Belum ada rencana trading yang selesai.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- New section for Overall Summary Statistics -->
+        <section id="overallSummaryStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Statistik Ringkasan Keseluruhan</h2>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm grid grid-cols-1 md:grid-cols-6 gap-4 text-center">
+                <div><p class="text-gray-600 text-sm font-light">Total Trade Selesai</p><p id="totalSettledTradesSummary" class="text-base mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Total Pips/Points Kumulatif</p><p id="totalPipsSummary" class="text-base mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Persentase Perubahan Saldo Akun</p><p id="overallPercentageSummary" class="text-base mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Saldo Akun Akhir</p><p id="finalBalanceSummary" class="text-base mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Probabilitas</p><p id="probabilitySummary" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Waktu Bergabung</p><p id="joinTimeSummary" class="text-base font-light text-black mt-1">N/A</p></div>
+            </div>
+        </section>
+
+        <!-- New section for Risk and Reward Statistics -->
+        <section id="riskRewardStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Statistik Risiko dan Imbalan</h2>
+            <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-center">
+                <div class="md:col-span-2 lg:col-span-3 flex flex-col sm:flex-row justify-center items-center p-2 rounded-md bg-gray-100">
+                    <p class="text-gray-600 text-sm font-light mr-2">Rata-rata Risiko dan Imbalan</p><p id="avgRiskReward" class="text-lg font-light text-black">1 : N/A</p>
+                </div>
+                <div><p class="text-gray-600 text-sm font-light">Rata-rata Sinyal Diselesaikan/Bulan</p><p id="avgSignalSettledMonth" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Rata-rata Periode Penahanan</p><p id="avgHoldingPeriod" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Rata-rata TP Pips</p><p id="avgTpPips" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Rata-rata SL Pips</p><p id="avgSlPips" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Keuntungan Beruntun</p><p id="consecutiveProfit" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Kerugian Beruntun</p><p id="consecutiveLoss" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Rata-rata Pips</p><p id="averagePips" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Laba Kotor</p><p id="grossProfit" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Rugi Kotor</p><p id="grossLoss" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Rata-rata Sinyal Diselesaikan/Minggu</p><p id="avgSignalSettledWeek" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Periode Penahanan Maks</p><p id="maxHoldingPeriod" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Max TP Pips</p><p id="maxTpPips" class="text-base font-light text-black mt-1">N/A</p></div>
+                <div><p class="text-gray-600 text-sm font-light">Max SL Pips</p><p id="maxSlPips" class="text-base font-light text-black mt-1">N/A</p></div>
+            </div>
+        </section>
+
+        <section id="assetSuccessStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Statistik Keberhasilan Aset</h2>
+            <div id="pieChartContainer" class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center">
+                <canvas id="assetSuccessPieChart"></canvas>
+                <div id="pieChartLoading" class="hidden text-gray-500">Memuat data keberhasilan aset...</div>
+                <div id="pieChartError" class="hidden error-message"></div>
+                <div id="pieChartNoData" class="hidden text-gray-500">Tidak ada data keberhasilan aset yang tersedia.</div>
+            </div>
+        </section>
+
+        <section id="dailyLineStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">
+                Statistik Persentase Harian <span id="dailyChartDateTime" class="text-gray-600 text-sm font-light"></span>
+            </h2>
+            <div id="dailyLineChartContainer" class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center min-h-[250px]">
+                <canvas id="dailyLineChart"></canvas>
+                <div id="dailyLineChartLoading" class="hidden text-gray-500">Memuat data statistik...</div>
+                <div id="dailyLineChartError" class="hidden error-message"></div>
+                <div id="dailyLineChartNoData" class="hidden text-gray-500">Tidak ada data statistik harian.</div>
+            </div>
+        </section>
+
+        <section id="monthlyBarStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Statistik Persentase Bulanan (Diagram Batang)</h2>
+            <div id="monthlyBarChartContainer" class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center min-h-[250px]">
+                <canvas id="monthlyBarChart"></canvas>
+                <div id="monthlyBarChartLoading" class="hidden text-gray-500">Memuat data statistik...</div>
+                <div id="monthlyBarChartError" class="hidden error-message"></div>
+                <div id="monthlyBarChartNoData" class="hidden text-gray-500">Tidak ada data statistik bulanan.</div>
+            </div>
+        </section>
+
+        <section id="overallPercentageCumulativeStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Statistik Persentase Kumulatif Keseluruhan (Acuan Balance)</h2>
+            <div id="overallPercentageCumulativeChartContainer" class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center min-h-[250px]">
+                <canvas id="overallPercentageCumulativeChart"></canvas>
+                <div id="overallPercentageCumulativeChartLoading" class="hidden text-gray-500">Memuat data statistik...</div>
+                <div id="overallPercentageCumulativeChartError" class="hidden error-message"></div>
+                <div id="overallPercentageCumulativeChartNoData" class="hidden text-gray-500">Tidak ada data statistik kumulatif keseluruhan.</div>
+            </div>
+        </section>
+
+        <section id="overallBalanceCumulativeStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Statistik Saldo Akun Kumulatif Keseluruhan</h2>
+            <div id="overallBalanceCumulativeChartContainer" class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center min-h-[250px]">
+                <canvas id="overallBalanceCumulativeChart"></canvas>
+                <div id="overallBalanceCumulativeChartLoading" class="hidden text-gray-500">Memuat data statistik...</div>
+                <div id="overallBalanceCumulativeChartError" class="hidden error-message"></div>
+                <div id="overallBalanceCumulativeChartNoData" class="hidden text-gray-500">Tidak ada data statistik saldo kumulatif keseluruhan.</div>
+            </div>
+        </section>
+
+        <section id="overallPipsCumulativeStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Statistik Pips/Points Kumulatif Keseluruhan</h2>
+            <div id="overallPipsCumulativeChartContainer" class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center min-h-[250px]">
+                <canvas id="overallPipsCumulativeChart"></canvas>
+                <div id="overallPipsCumulativeChartLoading" class="hidden text-gray-500">Memuat data statistik...</div>
+                <div id="overallPipsCumulativeChartError" class="hidden error-message"></div>
+                <div id="overallPipsCumulativeChartNoData" class="hidden text-gray-500">Tidak ada data statistik pips/points kumulatif keseluruhan.</div>
+            </div>
+        </section>
+
+        <!-- New section for Trade Frequency Chart -->
+        <section id="tradeFrequencyStatisticsSection" class="mt-8 scroll-animate-section">
+            <h2 class="text-lg font-normal text-primary mb-4 pb-2 border-b border-gray-200">Frekuensi Eksekusi Trade per Aset</h2>
+            <div id="tradeFrequencyChartContainer" class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm flex items-center justify-center min-h-[250px]">
+                <canvas id="tradeFrequencyChart"></canvas>
+                <div id="tradeFrequencyChartLoading" class="hidden text-gray-500">Memuat data frekuensi trade...</div>
+                <div id="tradeFrequencyChartError" class="hidden error-message"></div>
+                <div id="tradeFrequencyChartNoData" class="hidden text-gray-500">Tidak ada data frekuensi trade.</div>
+            </div>
+        </section>
+
+        <!-- New section for the provided text content -->
+        <section class="info-section mt-8 scroll-animate-section">
+            <h2 class="text-xl font-medium text-primary mb-4">Bagaimana Kasino Vegas Membuat Pemain Rugi & Mirip dengan Broker Curang</h2>
+            <p class="text-base font-light text-gray-700 leading-relaxed mb-4">Baik kasino di Las Vegas maupun beberapa broker "nakal" memiliki strategi tersembunyi untuk memastikan keuntungan mereka, seringkali dengan mengorbankan pemain atau trader yang menguntungkan. Meskipun metode mereka berbeda, prinsip dasarnya sama: memanipulasi probabilitas dan informasi untuk keuntungan mereka.</p>
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Alur Kasino Vegas Membuat Pemain Rugi</h3>
+            <p class="text-base font-light text-gray-700 leading-relaxed mb-4">Kasino tidak perlu "curang" secara terang-terterangan untuk menang; model bisnis mereka dibangun di atas keunggulan statistik yang disebut "house edge". Ini adalah persentase keuntungan jangka panjang yang dimiliki kasino atas pemain. Berikut adalah alurnya:</p>
+            <ul class="list-disc list-inside mb-4">
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Matematika yang Tidak Menguntungkan Pemain (House Edge):</strong> Setiap permainan kasino dirancang agar kasino selalu memiliki sedikit keuntungan matematis dalam jangka panjang. Misalnya, di rolet, ada angka 0 (dan kadang 00), yang berarti peluang Anda untuk memenangkan taruhan merah/hitam sedikit kurang dari 50%. Meskipun Anda mungkin menang beberapa putaran, secara statistik, kasino akan selalu di atas angin seiring waktu.</li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Variasi dan Keberuntungan Jangka Pendek:</strong> Kasino mengandalkan fakta bahwa dalam jangka pendek, keberuntungan bisa berpihak pada pemain. Ini menciptakan ilusi bahwa pemain bisa menang besar, mendorong mereka untuk terus bermain. Kemenangan sesekali ini memicu dopamin dan membuat pemain merasa "beruntung," mendorong mereka untuk terus bertaruh.</li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Psikologi dan Lingkungan yang Memikat:</strong>
+                    <ul class="list-circle list-inside ml-4 mt-1">
+                        <li class="text-base font-light text-gray-700">Desain Tanpa Jendela dan Jam: Kasino dirancang untuk membuat pemain lupa waktu, mendorong mereka untuk bermain lebih lama.</li>
+                        <li class="text-base font-light text-gray-700">Atmosfer Glamor dan Hiburan: Suasana yang mewah, musik, dan minuman gratis menciptakan lingkungan yang nyaman dan mendorong pengeluaran.</li>
+                        <li class="text-base font-light text-gray-700">Kompensasi dan Hadiah (Comp): Kasino memberikan hadiah kecil (makanan gratis, kamar murah) kepada pemain yang kalah dalam jumlah besar atau bermain untuk waktu yang lama, membuat mereka merasa dihargai dan mendorong kunjungan kembali.</li>
+                    </ul>
+                </li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Kontrol Informasi dan Aturan Main:</strong> Kasino sepenuhnya mengontrol aturan main, pembayaran, dan informasi yang diberikan kepada pemain. Pemain seringkali tidak menyadari house edge yang sebenarnya atau bagaimana probabilitas bekerja melawan mereka.</li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Pengelolaan Keuangan Pemain:</strong> Kasino mendorong pemain untuk mengambil lebih banyak uang tunai, menyediakan ATM di lokasi, dan menawarkan fasilitas kredit, semuanya dirancang untuk membuat pemain terus berjudi bahkan setelah mereka kehabisan uang tunai yang mereka bawa.</li>
+            </ul>
+
+            <h3 class="text-lg font-semibold text-gray-800 mb-3">Koneksi dengan Broker Curang yang Mencurangi Trader Profitabel</h3>
+            <p class="text-base font-light text-gray-700 leading-relaxed mb-4">Meskipun ranahnya berbeda, modus operasi broker nakal yang mencurangi trader profitabel memiliki kemiripan filosofis dengan cara kasino beroperasi. Perbedaannya adalah broker tersebut melakukan tindakan yang lebih eksplisit dan seringkali ilegal.</p>
+            <ul class="list-disc list-inside mb-4">
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Manipulasi Data dan Eksekusi (House Edge Tersembunyi):</strong>
+                    <ul class="list-circle list-inside ml-4 mt-1">
+                        <li class="text-base font-light text-gray-700">Slippage yang Tidak Adil: Broker sengaja menerapkan slippage negatif yang besar pada pesanan trader yang profitabel, atau bahkan pada semua pesanan. Ini berarti harga eksekusi jauh lebih buruk dari harga yang diharapkan trader, mengikis keuntungan.</li>
+                        <li class="text-base font-light text-gray-700">Requotes dan Penolakan Pesanan: Pesanan trader yang profitabel, terutama pada saat volatilitas tinggi, seringkali ditolak atau di-requote dengan harga yang kurang menguntungkan. Ini mengganggu strategi trading dan menyebabkan frustrasi.</li>
+                        <li class="text-base font-light text-gray-700">Pemblokiran Penarikan Dana: Ini adalah bentuk kecurangan yang paling ekstrem. Ketika trader berhasil mengumpulkan keuntungan yang signifikan, broker membuat berbagai alasan (masalah verifikasi, masalah sistem) untuk menunda atau menolak penarikan dana.</li>
+                    </ul>
+                </li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Intervensi pada Order Flow (Memprediksi Gerakan Pemain):</strong>
+                    <ul class="list-circle list-inside ml-4 mt-1">
+                        <li class="text-base font-light text-gray-700">Dealing Desk (DD) vs. Non-Dealing Desk (NDD): Broker DD seringkali mengambil posisi berlawanan dengan trader mereka. Jika seorang trader sangat profitabel, broker DD mungkin akan menempatkan "stop-loss hunting" (memicu stop-loss trader secara artifisial) atau menahan harga yang menguntungkan.</li>
+                        <li class="text-base font-light text-gray-700">Manipulasi Harga: Broker dapat memanipulasi feed harga mereka sendiri, terutama saat ada berita penting, untuk memicu stop-loss atau menunda take-profit trader.</li>
+                    </ul>
+                </li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Psikologi dan Lingkungan yang Menjebak:</strong>
+                    <ul class="list-circle list-inside ml-4 mt-1">
+                        <li class="text-base font-light text-gray-700">Bonus dan Promosi Palsu: Banyak broker nakal menawarkan bonus deposit yang sangat besar, tetapi dengan syarat dan ketentuan penarikan yang hampir mustahil untuk dipenuhi. Ini mengunci dana trader dan mendorong mereka untuk terus trading.</li>
+                        <li class="text-base font-light text-gray-700">Edukasi yang Menyesatkan: Beberapa broker menyediakan "edukasi" yang pada dasarnya mendorong gaya trading yang tidak sehat atau terlalu agresif, yang pada akhirnya menguntungkan broker karena trader akan lebih sering kalah.</li>
+                    </ul>
+                </li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Kurangnya Transparansi dan Regulasi yang Lemah:</strong> Broker nakal sering beroperasi di yurisdiksi dengan regulasi yang longgar atau sama sekali tanpa regulasi. Ini memungkinkan mereka untuk melakukan praktik tidak etis tanpa takut dihukum. Mereka tidak memberikan laporan transparan tentang eksekusi order atau aliran dana.</li>
+                <li class="text-base font-light text-gray-700 mb-2"><strong>Memanfaatkan Emosi Trader:</strong> Sama seperti kasino, broker nakal memanfaatkan emosi seperti keserakahan dan ketakutan. Mereka tahu bahwa trader yang emosional cenderung membuat keputusan impulsif yang menguntungkan broker.</li>
+            </ul>
+            <p class="text-base font-light text-gray-700 leading-relaxed">Secara ringkas, baik kasino maupun broker curang bertujuan untuk mendapatkan keuntungan jangka panjang. Kasino melakukannya melalui keunggulan matematis yang inheren dalam permainan mereka dan manipulasi lingkungan psikologis. Broker curang, di sisi lain, secara aktif memanipulasi kondisi trading, data, dan terkadang bahkan menahan dana untuk memastikan mereka "menang" melawan trader yang menguntungkan. Kedua entitas ini mengandalkan fakta bahwa mayoritas "pemain" akan kalah dalam jangka panjang, entah karena matematika atau karena manipulasi sistem.</p>
+        </section>
+        <!-- Footer Section -->
+        <footer class="w-full py-4 text-center text-gray-700 text-sm font-light mt-8">
+            Leodra Sint | Think like a dealer, not like a player.
+        </footer>
+    </div>
+
+    <!-- Photo Upload Modal -->
+    <div id="photoUploadModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-11/12 max-w-lg">
+            <h3 class="text-lg font-semibold text-primary mb-4">Unggah & Pangkas Foto</h3>
+            <input type="file" id="imageInput" accept="image/*" class="hidden" multiple>
+            <div class="flex justify-center items-center bg-gray-100 rounded-md overflow-hidden mb-4">
+                <canvas id="imageCanvas" width="500" height="500" class="max-w-full max-h-full"></canvas>
+            </div>
+            <div class="flex justify-end gap-3 mt-4">
+                <button id="cancelPhotoBtn" class="action-button bg-gray-300 hover:bg-gray-400 text-gray-800">Batal</button>
+                <button id="cropAndSaveBtn" class="action-button">Pangkas & Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Photo Confirmation Modal -->
+    <div id="deletePhotoModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-11/12 max-w-sm text-center">
+            <h3 class="text-lg font-semibold text-primary mb-4">Hapus Foto?</h3>
+            <p class="text-gray-700 mb-6">Apakah Anda yakin ingin menghapus foto ini?</p>
+            <div class="flex justify-center gap-3 mt-4">
+                <button id="cancelDeletePhotoBtn" class="action-button bg-gray-300 hover:bg-gray-400 text-gray-800">Batal</button>
+                <button id="confirmDeletePhotoBtn" class="action-button bg-red-600 hover:bg-red-700">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Data Confirmation Modal -->
+    <div id="uploadConfirmModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[60] hidden">
+        <div class="bg-white p-6 rounded-lg shadow-xl w-11/12 max-w-sm text-center">
+            <h3 class="text-lg font-semibold text-primary mb-4">Unggah Data Trading?</h3>
+            <p class="text-gray-700 mb-6">Mengunggah data akan menimpa semua data "Rencana Trading Selesai" yang ada. Lanjutkan?</p>
+            <div class="flex justify-center gap-3 mt-4">
+                <button id="cancelUploadConfirmBtn" class="action-button bg-gray-300 hover:bg-gray-400 text-gray-800">Batal</button>
+                <button id="confirmUploadBtn" class="action-button bg-blue-600 hover:bg-blue-700">Unggah</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Firebase imports
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, onSnapshot, addDoc, deleteDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-storage.js";
+
+        // Global Firebase variables
+        let app;
+        let db;
+        let auth;
+        let storage;
+        let userId = 'anonymous'; // Default to anonymous
+
+        // Initialize Firebase
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Global variables for data storage
+        let calculatedPlansData = []; // New: for plans that are calculated but not yet running
+        let runningPlansData = [];    // Renamed from activePlansData
+        let executedPlansData = [];
+
+        // --- DATA ASET & NILAI PIPS/POINTS ---
+        // Menambahkan properti 'minLotIncrement' untuk setiap aset
+        const assetValues = {
+            'EUR/USD': { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 },
+            'GBP/USD': { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 },
+            'AUD/USD': { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 },
+            'NZD/USD': { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 },
+            'USD/JPY': { decimals: 3, pipValue: 9.09, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 },
+            'USD/CAD': { decimals: 5, pipValue: 7.30, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 },
+            'USD/CHF': { decimals: 5, pipValue: 11.20, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 },
+            'USD/SEK': { decimals: 5, pipValue: 1.00, contractSize: 100000, type: 'forexMajor', currency: 'SEK', minLotIncrement: 0.01 },
+            'USD/NOK': { decimals: 5, pipValue: 1.00, contractSize: 100000, type: 'forexMajor', currency: 'NOK', minLotIncrement: 0.01 },
+            'USD/DKK': { decimals: 5, pipValue: 1.00, contractSize: 100000, type: 'forexMajor', currency: 'DKK', minLotIncrement: 0.01 },
+            'EUR/GBP': { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexCross', currency: 'GBP', minLotIncrement: 0.01 },
+            'EUR/JPY': { decimals: 3, pipValue: 9.09, contractSize: 100000, type: 'forexCross', currency: 'JPY', minLotIncrement: 0.01 },
+            'GBP/JPY': { decimals: 3, pipValue: 9.09, contractSize: 100000, type: 'forexCross', currency: 'JPY', minLotIncrement: 0.01 },
+            'AUD/JPY': { decimals: 3, pipValue: 9.09, contractSize: 100000, type: 'forexCross', currency: 'JPY', minLotIncrement: 0.01 },
+            'CAD/JPY': { decimals: 3, pipValue: 9.09, contractSize: 100000, type: 'forexCross', currency: 'JPY', minLotIncrement: 0.01 },
+            'CHF/JPY': { decimals: 3, pipValue: 11.20, contractSize: 100000, type: 'forexCross', currency: 'JPY', minLotIncrement: 0.01 },
+            'EUR/AUD': { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexCross', currency: 'AUD', minLotIncrement: 0.01 },
+            'EUR/CAD': { decimals: 5, pipValue: 7.30, contractSize: 100000, type: 'forexCross', currency: 'CAD', minLotIncrement: 0.01 },
+            'EUR/CHF': { decimals: 5, pipValue: 11.20, contractSize: 100000, type: 'forexCross', currency: 'CHF', minLotIncrement: 0.01 },
+            'EUR/NZD': { decimals: 5, pipValue: 6.00, contractSize: 100000, type: 'forexCross', currency: 'NZD', minLotIncrement: 0.01 },
+            'GBP/AUD': { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexCross', currency: 'AUD', minLotIncrement: 0.01 },
+            'GBP/CAD': { decimals: 5, pipValue: 7.30, contractSize: 100000, type: 'forexCross', currency: 'CAD', minLotIncrement: 0.01 },
+            'GBP/CHF': { decimals: 5, pipValue: 11.20, contractSize: 100000, type: 'forexCross', currency: 'CHF', minLotIncrement: 0.01 },
+            'GBP/NZD': { decimals: 5, pipValue: 6.00, contractSize: 100000, type: 'forexCross', currency: 'NZD', minLotIncrement: 0.01 },
+            'AUD/CAD': { decimals: 5, pipValue: 7.30, contractSize: 100000, type: 'forexCross', currency: 'CAD', minLotIncrement: 0.01 },
+            'AUD/CHF': { decimals: 5, pipValue: 11.20, contractSize: 100000, type: 'forexCross', currency: 'CHF', minLotIncrement: 0.01 },
+            'AUD/NZD': { decimals: 5, pipValue: 6.00, contractSize: 100000, type: 'forexCross', currency: 'NZD', minLotIncrement: 0.01 },
+            'CAD/CHF': { decimals: 5, pipValue: 11.20, contractSize: 100000, type: 'forexCross', currency: 'CHF', minLotIncrement: 0.01 },
+            'NZD/CAD': { decimals: 5, pipValue: 7.30, contractSize: 100000, type: 'forexCross', currency: 'CAD', minLotIncrement: 0.01 },
+            'NZD/CHF': { decimals: 5, pipValue: 11.20, contractSize: 100000, type: 'forexCross', currency: 'CHF', minLotIncrement: 0.01 },
+            'EUR/SEK': { decimals: 5, pipValue: 1.00, contractSize: 100000, type: 'forexCross', currency: 'SEK', minLotIncrement: 0.01 },
+            'EUR/NOK': { decimals: 5, pipValue: 1.00, contractSize: 100000, type: 'forexCross', currency: 'NOK', minLotIncrement: 0.01 },
+            'GBP/SEK': { decimals: 5, pipValue: 1.00, contractSize: 100000, type: 'forexCross', currency: 'SEK', minLotIncrement: 0.01 },
+            'GBP/NOK': { decimals: 5, pipValue: 1.00, contractSize: 100000, type: 'forexCross', currency: 'NOK', minLotIncrement: 0.01 },
+            'USD/MXN': { decimals: 5, pipValue: 0.50, contractSize: 100000, type: 'forexExotic', currency: 'MXN', minLotIncrement: 0.01 },
+            'USD/ZAR': { decimals: 5, pipValue: 0.05, contractSize: 100000, type: 'forexExotic', currency: 'ZAR', minLotIncrement: 0.01 },
+            'USD/TRY': { decimals: 5, pipValue: 0.03, contractSize: 100000, type: 'forexExotic', currency: 'TRY', minLotIncrement: 0.01 },
+            'USD/SGD': { decimals: 5, pipValue: 0.74, contractSize: 100000, type: 'forexExotic', currency: 'SGD', minLotIncrement: 0.01 },
+            'USD/HKD': { decimals: 5, pipValue: 1.28, contractSize: 100000, type: 'forexExotic', currency: 'HKD', minLotIncrement: 0.01 },
+            'EUR/TRY': { decimals: 5, pipValue: 0.03, contractSize: 100000, type: 'forexExotic', currency: 'TRY', minLotIncrement: 0.01 },
+            'GBP/TRY': { decimals: 5, pipValue: 0.03, contractSize: 100000, type: 'forexExotic', currency: 'TRY', minLotIncrement: 0.01 },
+            'AUD/SGD': { decimals: 5, pipValue: 0.74, contractSize: 100000, type: 'forexExotic', currency: 'SGD', minLotIncrement: 0.01 },
+            'NZD/SGD': { decimals: 5, pipValue: 0.74, contractSize: 100000, type: 'forexExotic', currency: 'SGD', minLotIncrement: 0.01 },
+            'CAD/SGD': { decimals: 5, pipValue: 0.74, contractSize: 100000, type: 'forexExotic', currency: 'CAD', minLotIncrement: 0.01 },
+            'CHF/SGD': { decimals: 5, pipValue: 11.20, contractSize: 100000, type: 'forexExotic', currency: 'CHF', minLotIncrement: 0.01 },
+            'USD/PLN': { decimals: 5, pipValue: 0.25, contractSize: 100000, type: 'forexExotic', currency: 'PLN', minLotIncrement: 0.01 },
+            'USD/HUF': { decimals: 5, pipValue: 0.003, contractSize: 100000, type: 'forexExotic', currency: 'HUF', minLotIncrement: 0.01 },
+            'USD/CZK': { decimals: 5, pipValue: 0.04, contractSize: 100000, type: 'forexExotic', currency: 'CZK', minLotIncrement: 0.01 },
+            'XAU/USD': { decimals: 2, pipValue: 100.00, contractSize: 100, type: 'commodity', currency: 'USD', minLotIncrement: 0.01 },
+            'XAG/USD': { decimals: 3, pipValue: 50.00, contractSize: 5000, type: 'commodity', currency: 'USD', minLotIncrement: 0.01 },
+            'WTI/USD': { decimals: 2, pipValue: 10.00, contractSize: 1000, type: 'commodity', currency: 'USD', minLotIncrement: 0.01 },
+            'BRENT/USD': { decimals: 2, pipValue: 10.00, contractSize: 1000, type: 'commodity', currency: 'USD', minLotIncrement: 0.01 },
+            'NATGAS/USD': { decimals: 3, pipValue: 10.00, contractSize: 10000, type: 'commodity', currency: 'USD', minLotIncrement: 0.01 },
+            'COPPER/USD': { decimals: 4, pipValue: 25000.00, contractSize: 25000, type: 'commodity', currency: 'USD', minLotIncrement: 0.01 },
+            'PLATINUM/USD': { decimals: 2, pipValue: 50.00, contractSize: 50, type: 'commodity', currency: 'USD', minLotIncrement: 0.01 },
+            'US30': { decimals: 0, pipValue: 1.00, contractSize: 1, type: 'index', currency: 'USD', minLotIncrement: 0.01 },
+            'SPX500': { decimals: 2, pipValue: 50.00, contractSize: 50, type: 'index', currency: 'USD', minLotIncrement: 0.01 },
+            'DAX40': { decimals: 1, pipValue: 25.00, contractSize: 25, type: 'index', currency: 'EUR', minLotIncrement: 0.01 },
+            'NAS100': { decimals: 2, pipValue: 2.00, contractSize: 2, type: 'index', currency: 'USD', minLotIncrement: 0.01 },
+            'UK100': { decimals: 1, pipValue: 10.00, contractSize: 10, type: 'index', currency: 'GBP', minLotIncrement: 0.01 },
+            'JP225': { decimals: 1, pipValue: 500.00, contractSize: 500, type: 'index', currency: 'JPY', minLotIncrement: 0.01 },
+            'AUS200': { decimals: 1, pipValue: 1.00, contractSize: 1, type: 'index', currency: 'AUD', minLotIncrement: 0.01 },
+            'HK50': { decimals: 1, pipValue: 10.00, contractSize: 10, type: 'index', currency: 'HKD', minLotIncrement: 0.01 },
+            'FR40': { decimals: 1, pipValue: 1.00, contractSize: 1, type: 'index', currency: 'EUR', minLotIncrement: 0.01 },
+            'EU50': { decimals: 1, pipValue: 1.00, contractSize: 1, type: 'index', currency: 'EUR', minLotIncrement: 0.01 },
+            'CHN50': { decimals: 1, pipValue: 1.00, contractSize: 1, type: 'index', currency: 'USD', minLotIncrement: 0.01 },
+            'EUSTX50': { decimals: 1, pipValue: 1.00, contractSize: 1, type: 'index', currency: 'EUR', minLotIncrement: 0.01 },
+            'SWI20': { decimals: 1, pipValue: 1.00, contractSize: 1, type: 'index', currency: 'CHF', minLotIncrement: 0.01 },
+            'BTC/USD': { decimals: 2, pipValue: 1.00, contractSize: 1, type: 'crypto', currency: 'USD', minLotIncrement: 0.01 },
+            'ETH/USD': { decimals: 2, pipValue: 1.00, contractSize: 1, type: 'crypto', currency: 'USD', minLotIncrement: 0.01 },
+            'XRP/USD': { decimals: 5, pipValue: 1.00, contractSize: 1, type: 'crypto', currency: 'USD', minLotIncrement: 0.01 },
+            'LTC/USD': { decimals: 2, pipValue: 1.00, contractSize: 1, type: 'crypto', currency: 'USD', minLotIncrement: 0.01 },
+            'ADA/USD': { decimals: 5, pipValue: 1.00, contractSize: 1, type: 'crypto', currency: 'USD', minLotIncrement: 0.01 },
+            'SOL/USD': { decimals: 2, pipValue: 1.00, contractSize: 1, type: 'crypto', currency: 'USD', minLotIncrement: 0.01 },
+            'DOGE/USD': { decimals: 6, pipValue: 1.00, contractSize: 1, type: 'crypto', currency: 'USD', minLotIncrement: 0.01 },
+        };
+
+        // --- GLOBAL VARIABLES DOM ELEMENTS ---
+        let rowCounter = 0;
+        const inputRowsContainer = document.getElementById('inputRowsContainer');
+        const calculatedPlansBody = document.getElementById('calculatedPlansBody'); // New element
+        const runningPlansBody = document.getElementById('runningPlansBody'); // Renamed from activePlansData
+        const executedPlansBody = document.getElementById('executedPlansBody');
+        const calculationDetailsContainer = document.getElementById('calculationDetails');
+        const dailyChartDateTime = document.getElementById('dailyChartDateTime');
+        const deleteAndExportDataBtn = document.getElementById('deleteAndExportDataBtn');
+        const uploadDataBtn = document.getElementById('uploadDataBtn');
+        const uploadConfirmModal = document.getElementById('uploadConfirmModal');
+        const confirmUploadBtn = document.getElementById('confirmUploadBtn');
+        const cancelUploadConfirmBtn = document.getElementById('cancelUploadConfirmBtn');
+        // const addPhotoBtn = document.getElementById('addPhotoBtn'); // Removed the add photo button
+        const photoCarousel = document.getElementById('photoCarousel'); // New carousel container
+        const photoSlides = document.getElementById('photoSlides'); // New slides container
+        const prevPhotoBtn = document.getElementById('prevPhotoBtn'); // New prev button
+        const nextPhotoBtn = document.getElementById('nextPhotoBtn'); // New next button
+        const photoCounter = document.getElementById('photoCounter'); // New photo counter
+        const deletePhotoIcon = document.getElementById('deletePhotoIcon');
+        const imageInput = document.getElementById('imageInput');
+        const imageCanvas = document.getElementById('imageCanvas');
+        const ctx = imageCanvas.getContext('2d');
+        const photoUploadModal = document.getElementById('photoUploadModal');
+        const cropAndSaveBtn = document.getElementById('cropAndSaveBtn');
+        const cancelPhotoBtn = document.getElementById('cancelPhotoBtn');
+        const deletePhotoModal = document.getElementById('deletePhotoModal');
+        const confirmDeletePhotoBtn = document.getElementById('confirmDeletePhotoBtn');
+        const cancelDeletePhotoBtn = document.getElementById('cancelDeletePhotoBtn');
+        let currentImageToCrop = null; // Stores the image currently being cropped
+        let userPhotos = []; // Array to store all user photo URLs
+        let currentPhotoIndex = 0; // Index of the currently displayed photo
+        const MAX_PHOTOS = 5; // Maximum number of photos allowed
+
+        // Global Chart instances (will be managed by IntersectionObserver)
+        let dailyLineChart = null, monthlyBarChart = null, assetPieChart = null, overallPercentageCumulativeChart = null, overallBalanceCumulativeChart = null, overallPipsCumulativeChart = null, tradeFrequencyChart = null;
+
+        // --- Risk Management Constants ---
+        const MONTHLY_LOSS_LIMIT = -4; // in percentage
+        const DAILY_LOSS_LIMIT = -2; // in percentage
+        const OVERALL_MAX_LOSS_LIMIT = -5; // in percentage
+        const MAX_RISK_PER_TRADE = 0.3; // in percentage // CHANGED FROM 0.2 TO 0.3
+        let limitNotificationMessage = '';
+
+        // --- Pending Pips Rules ---
+        const pendingPipsRules = {
+            'XAU/USD': { min: 20.0 },
+            'EUR/USD': { min: 5.0 },
+            'AUD/USD': { min: 5.0 },
+            'USD/CHF': { min: 5.0 },
+            'CHF/JPY': { min: 7.0, max: 15.0 },
+            'GBP/USD': { min: 10.0 }
+        };
+
+        // --- HELPER FUNCTIONS ---
+        const formatNumber = (value, decimals = 2) => (isNaN(value) || value === null || !isFinite(value)) ? 'N/A' : parseFloat(value).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+        const formatCurrency = (value, currency = 'USD') => (isNaN(value) || value === null || !isFinite(value)) ? 'N/A' : parseFloat(value).toLocaleString('en-US', { style: 'currency', currency: currency, minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const getColoredValueHtml = (value, isCurrency = false, decimals = 2) => {
+            if (value === 'N/A' || isNaN(value) || !isFinite(value)) return `<span class="text-black">N/A</span>`;
+            const formattedValue = isCurrency ? formatCurrency(value, 'USD') : formatNumber(value, decimals);
+            const colorClass = value >= 0 ? 'text-black' : 'text-red-500';
+            return `<span class="${colorClass}">${formattedValue}</span>`;
+        };
+        function updateDateTime() {
+            const now = new Date();
+            // Changed dateOptions to include weekday
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('id-ID', dateOptions);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('id-ID', timeOptions);
+            document.getElementById('currentDateHeader').textContent = now.toLocaleDateString('id-ID', dateOptions);
+            document.getElementById('currentTimeHeader').textContent = now.toLocaleTimeString('id-ID', timeOptions);
+            // Changed dailyChartDateTime to include weekday
+            if (dailyChartDateTime) dailyChartDateTime.textContent = `(${now.toLocaleDateString('id-ID', dateOptions)}, ${now.toLocaleTimeString('id-ID', timeOptions)})`;
+        }
+        const getRandomColor = (index) => `hsl(${(index * 137.508) % 360}, 70%, 50%)`;
+        function formatDuration(milliseconds) {
+            if (isNaN(milliseconds) || milliseconds < 0) return 'N/A';
+            const seconds = Math.floor(milliseconds / 1000);
+            const days = Math.floor(seconds / (3600 * 24));
+            const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = seconds % 60;
+            let result = '';
+            if (days > 0) result += `${days} Days `;
+            result += `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+            return result.trim();
+        }
+
+        // --- FIREBASE STORAGE FUNCTIONS ---
+        async function loadProfilePictures(uid) {
+            if (!storage) {
+                console.warn("Firebase Storage is not initialized. Cannot load profile pictures.");
+                loadPhotosFromLocalStorage(); // Fallback to local storage
+                renderPhotoGallery();
+                return;
+            }
+            userPhotos = [];
+            const loadPromises = [];
+            for (let i = 0; i < MAX_PHOTOS; i++) {
+                const imageRef = ref(storage, `artifacts/${appId}/users/${uid}/profile_${i}.png`);
+                loadPromises.push(getDownloadURL(imageRef)
+                    .then(url => ({ url, index: i }))
+                    .catch(error => {
+                        if (error.code === 'storage/object-not-found') {
+                            // console.log(`No profile picture found at profile_${i}.png`);
+                        } else if (error.code === 'storage/unauthorized') {
+                            console.error("Firebase Storage Permission Error: User does not have permission to access profile picture. Please check your Firebase Storage Security Rules to ensure read access for authenticated users (e.g., 'allow read: if request.auth != null;').", error);
+                        } else {
+                            console.error(`Error loading profile picture profile_${i}.png:`, error);
+                        }
+                        return null; // Return null for failed loads
+                    })
+                );
+            }
+            const results = await Promise.all(loadPromises);
+            results.forEach(result => {
+                if (result) {
+                    userPhotos[result.index] = result.url; // Place URL at its original index
+                }
+            });
+            userPhotos = userPhotos.filter(url => url !== null && url !== undefined); // Remove null/undefined entries
+            console.log("Profile pictures loaded from Firebase Storage:", userPhotos.length);
+            renderPhotoGallery();
+            savePhotosToLocalStorage(); // Keep local storage in sync
+        }
+
+        async function saveProfilePicture(uid, imageDataUrl, index) {
+            if (!storage) {
+                console.warn("Firebase Storage is not initialized. Cannot save profile picture.");
+                userPhotos[index] = imageDataUrl; // Update in memory
+                savePhotosToLocalStorage(); // Fallback to local storage
+                renderPhotoGallery();
+                return;
+            }
+            try {
+                const imageRef = ref(storage, `artifacts/${appId}/users/${uid}/profile_${index}.png`);
+                const response = await fetch(imageDataUrl);
+                const blob = await response.blob();
+                await uploadBytes(imageRef, blob);
+                userPhotos[index] = imageDataUrl; // Update in memory with the cropped data URL
+                console.log(`Profile picture profile_${index}.png saved to Firebase Storage.`);
+                renderPhotoGallery(); // Update display after successful save
+            } catch (error) {
+                if (error.code === 'storage/unauthorized') {
+                    console.error("Firebase Storage Permission Error: User does not have permission to save profile picture. Please check your Firebase Storage Security Rules to ensure write access for authenticated users (e.g., 'allow write: if request.auth != null;').", error);
+                } else {
+                    console.error(`Error saving profile picture profile_${index}.png to Firebase Storage:`, error);
+                }
+            }
+        }
+
+        async function deleteProfilePicture(uid, indexToDelete) {
+            if (!storage) {
+                console.warn("Firebase Storage is not initialized. Cannot delete profile picture.");
+                userPhotos.splice(indexToDelete, 1); // Remove from array
+                savePhotosToLocalStorage(); // Fallback to local storage
+                renderPhotoGallery();
+                return;
+            }
+            try {
+                const imageRef = ref(storage, `artifacts/${appId}/users/${uid}/profile_${indexToDelete}.png`);
+                await deleteObject(imageRef);
+                console.log(`Profile picture profile_${indexToDelete}.png deleted from Firebase Storage.`);
+                userPhotos.splice(indexToDelete, 1); // Remove from array
+                // Re-index remaining photos in Firebase storage to fill the gap
+                for (let i = indexToDelete; i < userPhotos.length; i++) {
+                    const oldRef = ref(storage, `artifacts/${appId}/users/${uid}/profile_${i + 1}.png`);
+                    const newRef = ref(storage, `artifacts/${appId}/users/${uid}/profile_${i}.png`);
+                    // This is a workaround as Firebase Storage doesn't have a direct "rename" or "move" operation.
+                    // We re-upload the next image to the current slot and then delete the old one.
+                    try {
+                        const url = await getDownloadURL(oldRef);
+                        const response = await fetch(url);
+                        const blob = await response.blob();
+                        await uploadBytes(newRef, blob);
+                        await deleteObject(oldRef);
+                        userPhotos[i] = url; // Update local array with the moved image
+                    } catch (error) {
+                        if (error.code === 'storage/object-not-found') {
+                            // No next image to shift, stop re-indexing
+                            break;
+                        } else {
+                            console.error(`Error re-indexing photo from ${i + 1} to ${i}:`, error);
+                        }
+                    }
+                }
+                // Finally, delete the last photo if it was shifted
+                if (userPhotos.length < MAX_PHOTOS) { // Check if there's a potential leftover at the end
+                    const lastPossibleRef = ref(storage, `artifacts/${appId}/users/${uid}/profile_${userPhotos.length}.png`);
+                    try {
+                        await deleteObject(lastPossibleRef);
+                    } catch (error) {
+                        if (error.code === 'storage/object-not-found') { /* fine */ }
+                        else { console.error("Error deleting last shifted photo:", error); }
+                    }
+                }
+                savePhotosToLocalStorage(); // Keep local storage in sync
+                renderPhotoGallery();
+            } catch (error) {
+                console.error("Error deleting profile picture from Firebase Storage:", error);
+                // Even if Firebase delete fails, try to update local storage and re-render
+                userPhotos.splice(indexToDelete, 1);
+                savePhotosToLocalStorage();
+                renderPhotoGallery();
+            }
+        }
+
+        // --- FIREBASE FIRESTORE FUNCTIONS (No changes needed here for photo functionality) ---
+        async function loadCalculatedPlans(uid) {
+            if (!db) return;
+            try {
+                const q = query(collection(db, `artifacts/${appId}/users/${uid}/calculatedPlans`));
+                onSnapshot(q, (snapshot) => {
+                    calculatedPlansData = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        data.assetData = getAssetData(data.symbol);
+                        return data;
+                    });
+                    console.log("Calculated plans loaded from Firestore:", calculatedPlansData.length);
+                    renderCalculatedPlans();
+                    saveDataToLocalStorage(); // Keep local storage in sync
+                }, (error) => {
+                    console.error("Error listening to calculated plans from Firestore:", error);
+                });
+            } catch (error) {
+                console.error("Error setting up Firestore listener for calculated plans:", error);
+            }
+        }
+
+        async function saveCalculatedPlan(uid, plan) {
+            if (!db) return;
+            try {
+                await setDoc(doc(db, `artifacts/${appId}/users/${uid}/calculatedPlans`, plan.rowId), plan);
+                console.log("Calculated plan saved to Firestore:", plan.rowId);
+            } catch (error) {
+                console.error("Error saving calculated plan to Firestore:", error);
+            }
+        }
+
+        async function deleteCalculatedPlan(uid, rowId) {
+            if (!db) return;
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${uid}/calculatedPlans`, rowId));
+                console.log("Calculated plan deleted from Firestore:", rowId);
+            } catch (error) {
+                console.error("Error deleting calculated plan from Firestore:", error);
+            }
+        }
+
+        async function loadRunningPlans(uid) {
+            if (!db) return;
+            try {
+                const q = query(collection(db, `artifacts/${appId}/users/${uid}/runningPlans`));
+                onSnapshot(q, (snapshot) => {
+                    runningPlansData = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        data.assetData = getAssetData(data.symbol);
+                        return data;
+                    });
+                    console.log("Running plans loaded from Firestore:", runningPlansData.length);
+                    renderRunningPlans();
+                    saveDataToLocalStorage(); // Keep local storage in sync
+                }, (error) => {
+                    console.error("Error listening to running plans from Firestore:", error);
+                });
+            } catch (error) {
+                console.error("Error setting up Firestore listener for running plans:", error);
+            }
+        }
+
+        async function saveRunningPlan(uid, plan) {
+            if (!db) return;
+            try {
+                await setDoc(doc(db, `artifacts/${appId}/users/${uid}/runningPlans`, plan.rowId), plan);
+                console.log("Running plan saved to Firestore:", plan.rowId);
+            } catch (error) {
+                console.error("Error saving running plan to Firestore:", error);
+            }
+        }
+
+        async function deleteRunningPlan(uid, rowId) {
+            if (!db) return;
+            try {
+                await deleteDoc(doc(db, `artifacts/${appId}/users/${uid}/runningPlans`, rowId));
+                console.log("Running plan deleted from Firestore:", rowId);
+            } catch (error) {
+                console.error("Error deleting running plan from Firestore:", error);
+            }
+        }
+
+        async function loadExecutedPlans(uid) {
+            if (!db) {
+                console.warn("Firestore is not initialized. Cannot load executed plans.");
+                loadDataFromLocalStorage(); // Fallback to local storage
+                renderExecutedPlans();
+                calculateSummaryStatistics(); // Call here to update join time from local data
+                return;
+            }
+            try {
+                const q = query(collection(db, `artifacts/${appId}/users/${uid}/executedPlans`));
+                onSnapshot(q, (snapshot) => {
+                    const plans = [];
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        data.assetData = getAssetData(data.symbol);
+                        plans.push(data);
+                    });
+                    executedPlansData = plans.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                    console.log("Executed plans loaded from Firestore:", executedPlansData.length);
+                    renderExecutedPlans();
+                    calculateSummaryStatistics(); // Explicitly call here to update all summary stats including join time
+                    updateRiskRewardStatistics(); // Explicitly call here
+                    checkTradeLimits();
+                    displayLimitNotification(limitNotificationMessage);
+                    // Re-render charts after loading data
+                    for (const sectionId in chartSections) {
+                        const chartInfo = chartSections[sectionId];
+                        // Destroy existing chart instances before re-rendering
+                        if (chartInfo.chartInstance && chartInfo.chartInstance()) {
+                            chartInfo.chartInstance().destroy();
+                            chartInfo.setInstance(null);
+                        }
+                        chartInfo.hasRendered = false; // Reset rendered flag to allow re-rendering on scroll
+                    }
+                    animateOnScroll(); // Re-trigger scroll animation to render charts
+                    saveDataToLocalStorage(); // Keep local storage in sync
+                }, (error) => {
+                    console.error("Error listening to executed plans from Firestore:", error);
+                    loadDataFromLocalStorage(); // Fallback to local storage on error
+                    renderExecutedPlans();
+                    calculateSummaryStatistics(); // Call here to update join time from local data
+                });
+            } catch (error) {
+                console.error("Error setting up Firestore listener for executed plans:", error);
+                loadDataFromLocalStorage(); // Fallback to local storage on error
+                renderExecutedPlans();
+                calculateSummaryStatistics(); // Call here to update join time from local data
+            }
+        }
+
+        async function saveExecutedPlan(uid, plan) {
+            if (!db) {
+                console.warn("Firestore is not initialized. Cannot save executed plan.");
+                return;
+            }
+            try {
+                await addDoc(collection(db, `artifacts/${appId}/users/${uid}/executedPlans`), plan);
+                console.log("Executed plan saved to Firestore.");
+            } catch (error) {
+                console.error("Error saving executed plan to Firestore:", error);
+            }
+        }
+
+        async function deleteAllExecutedPlans(uid) {
+            if (!db) {
+                console.warn("Firestore is not initialized. Cannot delete all executed plans.");
+                return;
+            }
+            try {
+                const q = query(collection(db, `artifacts/${appId}/users/${uid}/executedPlans`));
+                const snapshot = await getDocs(q);
+                const deletePromises = [];
+                snapshot.forEach(doc => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+                await Promise.all(deletePromises);
+                console.log("All executed plans deleted from Firestore.");
+            } catch (error) {
+                console.error("Error deleting all executed plans from Firestore:", error);
+            }
+        }
+
+        // Removed loadJoinTime function as its logic is now integrated into calculateSummaryStatistics
+
+        // --- LOCAL STORAGE FUNCTIONS (Used as fallback if Firebase is not configured or fails) ---
+        function saveDataToLocalStorage() {
+            try {
+                localStorage.setItem('calculatedPlansData', JSON.stringify(calculatedPlansData));
+                localStorage.setItem('runningPlansData', JSON.stringify(runningPlansData));
+                localStorage.setItem('executedPlansData', JSON.stringify(executedPlansData));
+                console.log("Data saved to localStorage.");
+            }
+            catch (e) { console.error("Error saving to localStorage:", e); }
+        }
+        function loadDataFromLocalStorage() {
+            try {
+                calculatedPlansData = JSON.parse(localStorage.getItem('calculatedPlansData')) || [];
+                runningPlansData = JSON.parse(localStorage.getItem('runningPlansData')) || [];
+                executedPlansData = JSON.parse(localStorage.getItem('executedPlansData')) || [];
+                console.log("Data loaded from localStorage. Calculated Plans:", calculatedPlansData.length, "Running Plans:", runningPlansData.length, "Executed Plans:", executedPlansData.length);
+            }
+            catch (e) { console.error("Error loading from localStorage:", e); calculatedPlansData = []; runningPlansData = []; executedPlansData = []; }
+        }
+
+        // --- Photo Local Storage (separate for photos) ---
+        function savePhotosToLocalStorage() {
+            try {
+                localStorage.setItem('userPhotos', JSON.stringify(userPhotos));
+                console.log("Photos saved to localStorage.");
+            } catch (e) {
+                console.error("Error saving photos to localStorage:", e);
+            }
+        }
+
+        function loadPhotosFromLocalStorage() {
+            try {
+                userPhotos = JSON.parse(localStorage.getItem('userPhotos')) || [];
+                console.log("Photos loaded from localStorage:", userPhotos.length);
+            } catch (e) {
+                console.error("Error loading photos from localStorage:", e);
+                userPhotos = [];
+            }
+        }
+
+
+        // --- CHART.JS RENDERING FUNCTIONS (simplified error/loading handling) ---
+        const setupChartContainer = (canvasId, loadingId, errorId, noDataId) => {
+            const canvas = document.getElementById(canvasId);
+            const loading = document.getElementById(loadingId);
+            const error = document.getElementById(errorId);
+            const noData = document.getElementById(noDataId);
+            loading.classList.remove('hidden'); error.classList.add('hidden'); noData.classList.add('hidden'); canvas.style.display = 'none';
+            return { canvas, loading, error, noData };
+        };
+
+        const handleChartData = (data, { canvas, loading, error, noData }, chartInstanceRef, chartType, options) => {
+            loading.classList.add('hidden');
+            // Check if data is empty or if all values are zero for pie chart
+            if (data.labels.length === 0 || (chartType === 'pie' && data.datasets && data.datasets.length > 0 && data.datasets[0].data.every(val => val === 0))) {
+                noData.classList.remove('hidden'); canvas.style.display = 'none'; return false;
+            }
+            canvas.style.display = 'block';
+            if (chartInstanceRef.chart) chartInstanceRef.chart.destroy();
+            chartInstanceRef.chart = new Chart(canvas, { type: chartType, data: { labels: data.labels, datasets: data.datasets }, options });
+            return true;
+        };
+
+        async function fetchAndRenderDailyLineChart() {
+            const { canvas, loading, error, noData } = setupChartContainer('dailyLineChart', 'dailyLineChartLoading', 'dailyLineChartError', 'dailyLineChartNoData');
+            try {
+                const now = new Date(); const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+                const tradesToday = executedPlansData.filter(trade => {
+                    const tradeTimestamp = new Date(trade.timestamp).getTime();
+                    return tradeTimestamp >= todayStart && tradeTimestamp <= now.getTime() && trade.outcome !== 'Cancel';
+                }).sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+                const labels = [], data = []; let currentCumulativePercentage = 0, dailyInitialBalance = null;
+                tradesToday.forEach(trade => {
+                    if (dailyInitialBalance === null) dailyInitialBalance = trade.balance;
+                    let profitLoss = (trade.outcome === 'Take Profit') ? trade.nettTP : (trade.outcome === 'Stop Loss' ? trade.nettSL : 0);
+                    if (tradesToday.length > 0 && tradesToday[0].balance !== 0) {
+                        currentCumulativePercentage = ((dailyInitialBalance + profitLoss - tradesToday[0].balance) / tradesToday[0].balance) * 100;
+                        dailyInitialBalance += profitLoss;
+                    } else { currentCumulativePercentage = 0; }
+                    labels.push(new Date(trade.timestamp).toLocaleString('id-ID', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                    data.push(currentCumulativePercentage);
+                });
+
+                handleChartData({ labels, datasets: [{ label: 'Persentase Harian', data, borderColor: '#222', backgroundColor: 'rgba(34, 34, 34, 0.1)', fill: true, tension: 0.3, borderWidth: 1, pointRadius: 3, pointBackgroundColor: '#222', pointBorderColor: '#fff', pointHoverRadius: 5, pointHoverBackgroundColor: '#222', pointHoverBorderColor: '#fff' }] }, { canvas, loading, error, noData }, { chart: dailyLineChart, set chart(c) { dailyLineChart = c; } }, 'line', { responsive: true, maintainAspectRatio: false, animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatNumber(ctx.raw, 2) + '%' } } }, scales: { x: { title: { display: true, text: 'Tanggal & Waktu Transaksi Hari Ini', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { color: '#555', font: { family: 'Inter', size: 7 } } }, y: { beginAtZero: true, title: { display: true, text: 'Persentase Harian Kumulatif (%)', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { callback: val => formatNumber(val, 2) + '%', color: '#555', font: { family: 'Inter', size: 7 } } } } });
+            } catch (err) { console.error("Error daily line chart:", err); loading.classList.add('hidden'); error.textContent = 'Gagal memuat data grafik harian: ' + err.message; error.classList.remove('hidden'); canvas.style.display = 'none'; }
+        }
+
+        async function fetchAndRenderMonthlyBarChart() {
+            const { canvas, loading, error, noData } = setupChartContainer('monthlyBarChart', 'monthlyBarChartLoading', 'monthlyBarChartError', 'monthlyBarChartNoData');
+            try {
+                executedPlansData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const monthlyStatsMap = {};
+                executedPlansData.forEach(trade => {
+                    if (trade.outcome === 'Cancel') return;
+                    const monthYear = `${new Date(trade.timestamp).getFullYear()}-${(new Date(trade.timestamp).getMonth() + 1).toString().padStart(2, '0')}`;
+                    if (!monthlyStatsMap[monthYear]) monthlyStatsMap[monthYear] = { initialBalance: trade.balance, currentBalance: trade.balance };
+                    monthlyStatsMap[monthYear].currentBalance += (trade.outcome === 'Take Profit') ? trade.nettTP : (trade.outcome === 'Stop Loss' ? trade.nettSL : 0);
+                });
+                const labels = Object.keys(monthlyStatsMap).sort();
+                const data = labels.map(my => monthlyStatsMap[my].initialBalance !== 0 ? ((monthlyStatsMap[my].currentBalance - monthlyStatsMap[my].initialBalance) / monthlyStatsMap[my].initialBalance) * 100 : 0);
+                const backgroundColors = data.map(val => val >= 0 ? 'rgba(34, 34, 34, 0.8)' : 'rgba(220, 53, 69, 0.8)');
+
+                handleChartData({ labels, datasets: [{ label: 'Persentase Perubahan Bulanan', data, backgroundColor: backgroundColors, borderColor: backgroundColors.map(c => c.replace('0.8)', '1)')), borderWidth: 1 }] }, { canvas, loading, error, noData }, { chart: monthlyBarChart, set chart(c) { monthlyBarChart = c; } }, 'bar', { responsive: true, maintainAspectRatio: false, animation: { duration: 800 }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatNumber(ctx.raw, 2) + '%' } } }, scales: { x: { title: { display: true, text: 'Bulan', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { color: '#555', font: { family: 'Inter', size: 7 } } }, y: { beginAtZero: true, title: { display: true, text: 'Persentase (%)', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { callback: val => formatNumber(val, 2) + '%', color: '#555', font: { family: 'Inter', size: 7 } } } } });
+            } catch (err) { console.error("Error monthly bar chart:", err); loading.classList.add('hidden'); error.textContent = 'Gagal memuat data grafik batang bulanan: ' + err.message; error.classList.remove('hidden'); canvas.style.display = 'none'; }
+        }
+
+        async function fetchAndRenderPieChart() {
+            const { canvas, loading, error, noData } = setupChartContainer('assetSuccessPieChart', 'pieChartLoading', 'pieChartError', 'pieChartNoData');
+            try {
+                const takeProfitTradesByAsset = {}; let totalTakeProfitTrades = 0;
+                executedPlansData.forEach(trade => { if (trade.outcome === 'Take Profit') { takeProfitTradesByAsset[trade.symbol] = (takeProfitTradesByAsset[trade.symbol] || 0) + 1; totalTakeProfitTrades++; } });
+
+                const labels = [], data = [], backgroundColors = []; let colorIndex = 0;
+                for (const symbol in takeProfitTradesByAsset) {
+                    const percentage = (takeProfitTradesByAsset[symbol] / totalTakeProfitTrades) * 100;
+                    labels.push(`${symbol} (${formatNumber(percentage, 2)}%)`); data.push(percentage); backgroundColors.push(getRandomColor(colorIndex++));
+                }
+
+                handleChartData({ labels, datasets: [{ data, backgroundColor: backgroundColors, hoverOffset: 10, borderColor: '#fff', borderWidth: 2 }] }, { canvas, loading, error, noData }, { chart: assetPieChart, set chart(c) { assetPieChart = c; } }, 'pie', { responsive: true, maintainAspectRatio: false, animation: { duration: 800 }, plugins: { legend: { display: true, position: 'top', labels: { color: '#333', font: { family: 'Inter', size: 12, weight: '300' }, padding: 20 } }, tooltip: { callbacks: { label: ctx => `${ctx.label || ''}: ${formatNumber(ctx.raw, 2)}%` }, spacing: 10 } } });
+            } catch (err) { console.error("Error pie chart:", err); loading.classList.add('hidden'); error.textContent = 'Gagal memuat data grafik keberhasilan aset: ' + err.message; error.classList.remove('hidden'); canvas.style.display = 'none'; }
+        }
+
+        async function fetchAndRenderOverallPercentageCumulativeChart() {
+            const { canvas, loading, error, noData } = setupChartContainer('overallPercentageCumulativeChart', 'overallPercentageCumulativeChartLoading', 'overallPercentageCumulativeChartError', 'overallPercentageCumulativeChartNoData');
+            try {
+                executedPlansData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const labels = [], data = []; let initialBalance = null, currentBalance = null;
+                executedPlansData.forEach(trade => {
+                    if (trade.outcome === 'Cancel') return;
+                    if (initialBalance === null) { initialBalance = trade.balance; currentBalance = trade.balance; }
+                    currentBalance += (trade.outcome === 'Take Profit') ? trade.nettTP : (trade.outcome === 'Stop Loss' ? trade.nettSL : 0);
+                    labels.push(new Date(trade.timestamp).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }));
+                    data.push(initialBalance !== 0 ? ((currentBalance - initialBalance) / initialBalance) * 100 : 0);
+                });
+                handleChartData({ labels, datasets: [{ label: 'Persentase Kumulatif Keseluruhan (Acuan Balance)', data, borderColor: '#007bff', backgroundColor: 'rgba(0, 123, 255, 0.1)', fill: true, tension: 0.3, borderWidth: 1, pointRadius: 3, pointBackgroundColor: '#007bff', pointBorderColor: '#fff', pointHoverRadius: 5, pointHoverBackgroundColor: '#007bff', pointHoverBorderColor: '#fff' }] }, { canvas, loading, error, noData }, { chart: overallPercentageCumulativeChart, set chart(c) { overallPercentageCumulativeChart = c; } }, 'line', { responsive: true, maintainAspectRatio: false, animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatNumber(ctx.raw, 2) + '%' } } }, scales: { x: { title: { display: true, text: 'Tanggal & Waktu Trade', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { color: '#555', font: { family: 'Inter', size: 7 } } }, y: { beginAtZero: true, title: { display: true, text: 'Persentase Kumulatif (%)', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { callback: val => formatNumber(val, 2) + '%', color: '#555', font: { family: 'Inter', size: 7 } } } } });
+            } catch (err) { console.error("Error overall cumulative percentage chart:", err); loading.classList.add('hidden'); error.textContent = 'Gagal memuat data grafik kumulatif keseluruhan: ' + err.message; error.classList.remove('hidden'); canvas.style.display = 'none'; }
+        }
+
+        async function fetchAndRenderOverallBalanceCumulativeChart() {
+            const { canvas, loading, error, noData } = setupChartContainer('overallBalanceCumulativeChart', 'overallBalanceCumulativeChartLoading', 'overallBalanceCumulativeChartError', 'overallBalanceCumulativeChartNoData');
+            try {
+                executedPlansData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const labels = [], data = []; let currentBalance = null;
+                executedPlansData.forEach(trade => {
+                    if (trade.outcome === 'Cancel') return;
+                    if (currentBalance === null) currentBalance = trade.balance;
+                    currentBalance += (trade.outcome === 'Take Profit') ? trade.nettTP : (trade.outcome === 'Stop Loss' ? trade.nettSL : 0);
+                    labels.push(new Date(trade.timestamp).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }));
+                    data.push(currentBalance);
+                });
+                handleChartData({ labels, datasets: [{ label: 'Saldo Akun Kumulatif Keseluruhan', data, borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.1)', fill: true, tension: 0.3, borderWidth: 1, pointRadius: 3, pointBackgroundColor: '#28a745', pointBorderColor: '#fff', pointHoverRadius: 5, pointHoverBackgroundColor: '#28a745', pointHoverBorderColor: '#fff' }] }, { canvas, loading, error, noData }, { chart: overallBalanceCumulativeChart, set chart(c) { overallBalanceCumulativeChart = c; } }, 'line', { responsive: true, maintainAspectRatio: false, animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatCurrency(ctx.raw, 'USD') } } }, scales: { x: { title: { display: true, text: 'Tanggal & Waktu Trade', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { color: '#555', font: { family: 'Inter', size: 7 } } }, y: { beginAtZero: true, title: { display: true, text: 'Saldo Akun ($)', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { callback: val => formatCurrency(val, 'USD'), color: '#555', font: { family: 'Inter', size: 7 } } } } });
+            } catch (err) { console.error("Error overall cumulative balance chart:", err); loading.classList.add('hidden'); error.textContent = 'Gagal memuat data grafik saldo kumulatif keseluruhan: ' + err.message; error.classList.remove('hidden'); canvas.style.display = 'none'; }
+        }
+
+        async function fetchAndRenderOverallPipsCumulativeChart() {
+            const { canvas, loading, error, noData } = setupChartContainer('overallPipsCumulativeChart', 'overallPipsCumulativeChartLoading', 'overallPipsCumulativeChartError', 'overallPipsCumulativeChartNoData');
+            try {
+                executedPlansData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const labels = [], data = []; let currentCumulativePips = 0;
+                executedPlansData.forEach(trade => {
+                    if (trade.outcome === 'Cancel') return;
+                    currentCumulativePips += (trade.outcome === 'Take Profit') ? trade.tpPips : (trade.outcome === 'Stop Loss' ? trade.slPips : 0);
+                    labels.push(new Date(trade.timestamp).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+                    data.push(currentCumulativePips);
+                });
+                handleChartData({ labels, datasets: [{ label: 'Pips/Points Kumulatif Keseluruhan', data, borderColor: '#ffc107', backgroundColor: 'rgba(255, 193, 7, 0.1)', fill: true, tension: 0.3, borderWidth: 1, pointRadius: 3, pointBackgroundColor: '#ffc107', pointBorderColor: '#fff', pointHoverRadius: 5, pointHoverBackgroundColor: '#ffc107', pointHoverBorderColor: '#fff' }] }, { canvas, loading, error, noData }, { chart: overallPipsCumulativeChart, set chart(c) { overallPipsCumulativeChart = c; } }, 'line', { responsive: true, maintainAspectRatio: false, animation: { duration: 1000, easing: 'easeOutQuart' }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ctx.dataset.label + ': ' + formatNumber(ctx.raw, 2) } } }, scales: { x: { title: { display: true, text: 'Tanggal & Waktu Trade', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { color: '#555', font: { family: 'Inter', size: 7 } } }, y: { beginAtZero: true, title: { display: true, text: 'Pips/Points', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { callback: val => formatNumber(val, 2), color: '#555', font: { family: 'Inter', size: 7 } } } } });
+            } catch (err) { console.error("Error overall cumulative pips chart:", err); loading.classList.add('hidden'); error.textContent = 'Gagal memuat data grafik pips/points kumulatif keseluruhan: ' + err.message; error.classList.remove('hidden'); canvas.style.display = 'none'; }
+        }
+
+        async function fetchAndRenderTradeFrequencyChart() {
+            const { canvas, loading, error, noData } = setupChartContainer('tradeFrequencyChart', 'tradeFrequencyChartLoading', 'tradeFrequencyChartError', 'tradeFrequencyChartNoData');
+            try {
+                const tradeCounts = {};
+                executedPlansData.forEach(trade => { if (trade.outcome !== 'Cancel') { const key = `${trade.symbol} - ${trade.tradeType}`; tradeCounts[key] = (tradeCounts[key] || 0) + 1; } });
+                const labels = Object.keys(tradeCounts).sort();
+                const data = labels.map(label => tradeCounts[label]);
+                const backgroundColors = labels.map(label => label.includes('BUY') ? 'rgba(34, 34, 34, 0.8)' : (label.includes('SELL') ? 'rgba(220, 53, 69, 0.8)' : 'rgba(108, 117, 125, 0.8)'));
+                const borderColors = backgroundColors.map(c => c.replace('0.8)', '1)'));
+
+                handleChartData({ labels, datasets: [{ label: 'Jumlah Eksekusi', data, backgroundColor: backgroundColors, borderColor: borderColors, borderWidth: 1 }] }, { canvas, loading, error, noData }, { chart: tradeFrequencyChart, set chart(c) { tradeFrequencyChart = c; } }, 'bar', { responsive: true, maintainAspectRatio: false, animation: { duration: 800 }, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw} kali` } } }, scales: { x: { title: { display: true, text: 'Aset & Tipe Trade', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { color: '#555', font: { family: 'Inter', size: 7 }, autoSkip: false, maxRotation: 45, minRotation: 45 } }, y: { beginAtZero: true, title: { display: true, text: 'Jumlah Eksekusi', color: '#555', font: { family: 'Inter', size: 8, weight: 'bold' } }, ticks: { callback: val => Number.isInteger(val) ? val : null, color: '#555', font: { family: 'Inter', size: 7 } } } } });
+            } catch (err) { console.error("Error trade frequency chart:", err); loading.classList.add('hidden'); error.textContent = 'Gagal memuat data grafik frekuensi trade: ' + err.message; error.classList.remove('hidden'); canvas.style.display = 'none'; }
+        }
+
+
+        // --- CORE CALCULATOR LOGIC ---
+        const getAssetData = (symbol) => assetValues[symbol] || { decimals: 5, pipValue: 10.00, contractSize: 100000, type: 'forexMajor', currency: 'USD', minLotIncrement: 0.01 };
+        function calculatePipsPoints(priceDiff, symbol) {
+            const assetData = getAssetData(symbol);
+            if (assetData.type.includes('forex')) { const pipUnitSize = (assetData.decimals === 5) ? 0.0001 : 0.01; return pipUnitSize === 0 ? 0 : priceDiff / pipUnitSize; }
+            return priceDiff;
+        }
+
+        function calculateRow(rowId) {
+            const rowElement = document.getElementById(`inputRow-${rowId}`); if (!rowElement) return null;
+            const tradeType = rowElement.querySelector(`#buyBtn-${rowId}`).classList.contains('active') ? 'BUY' : (rowElement.querySelector(`#sellBtn-${rowId}`).classList.contains('active') ? 'SELL' : null);
+            const inputs = ['symbol', 'balance', 'riskPercent', 'priceNow', 'openPrice', 'slPrice', 'tpPrice', 'note'].reduce((acc, id) => ({ ...acc, [id]: rowElement.querySelector(`#${id}-${rowId}`) }), {});
+            
+            // Get values directly from input elements
+            const symbolInput = inputs.symbol;
+            const selectedSymbol = symbolInput.value; // Get value from select element
+            const balance = parseFloat(inputs.balance.value);
+            const riskPercent = parseFloat(inputs.riskPercent.value);
+            const priceNow = parseFloat(inputs.priceNow.value);
+            const openPrice = parseFloat(inputs.openPrice.value);
+            const slPrice = parseFloat(inputs.slPrice.value);
+            const tpPrice = parseFloat(inputs.tpPrice.value);
+            const note = inputs.note.value.trim();
+
+            const riskLimitNote = rowElement.querySelector(`#riskLimitNote-${rowId}`);
+            const pendingPipsNote = rowElement.querySelector(`#pendingPipsNote-${rowId}`);
+
+            let isValid = true;
+            
+            // Clear previous messages and error highlights
+            riskLimitNote.classList.add('hidden');
+            pendingPipsNote.classList.add('hidden');
+            symbolInput.classList.remove('border-red-500');
+            inputs.balance.classList.remove('border-red-500');
+            inputs.riskPercent.classList.remove('border-red-500');
+            inputs.priceNow.classList.remove('border-red-500');
+            inputs.openPrice.classList.remove('border-red-500');
+            inputs.slPrice.classList.remove('border-red-500');
+            inputs.tpPrice.classList.remove('border-red-500');
+
+
+            // Validate symbol selection
+            if (!selectedSymbol || selectedSymbol.trim() === '') {
+                symbolInput.classList.add('border-red-500');
+                isValid = false;
+            }
+
+            if (!tradeType) isValid = false;
+
+            // Validate numerical inputs
+            if (isNaN(balance) || balance <= 0) { inputs.balance.classList.add('border-red-500'); isValid = false; }
+            if (isNaN(riskPercent) || riskPercent <= 0) { inputs.riskPercent.classList.add('border-red-500'); isValid = false; }
+            // For prices, allow values >= 0, as some assets can have very small prices (e.g., crypto)
+            if (isNaN(priceNow) || priceNow < 0) { inputs.priceNow.classList.add('border-red-500'); isValid = false; }
+            if (isNaN(openPrice) || openPrice < 0) { inputs.openPrice.classList.add('border-red-500'); isValid = false; }
+            if (isNaN(slPrice) || slPrice < 0) { inputs.slPrice.classList.add('border-red-500'); isValid = false; }
+            if (isNaN(tpPrice) || tpPrice < 0) { inputs.tpPrice.classList.add('border-red-500'); isValid = false; }
+
+
+            const cappedRiskPercent = riskPercent > MAX_RISK_PER_TRADE ? MAX_RISK_PER_TRADE : riskPercent;
+            if (riskPercent > MAX_RISK_PER_TRADE) { riskLimitNote.textContent = `Risiko maksimal adalah ${MAX_RISK_PER_TRADE}%`; riskLimitNote.classList.remove('hidden'); isValid = false; }
+
+            const assetData = getAssetData(selectedSymbol);
+            const { pipValue: pipPointValuePerStandardLot, decimals, minLotIncrement } = assetData;
+
+            const [priceDiffSL, priceDiffTP, priceDiffPending] = tradeType === 'BUY' ? [openPrice - slPrice, tpPrice - openPrice, priceNow - openPrice] : [slPrice - openPrice, openPrice - tpPrice, openPrice - priceNow];
+            const slPipsPoints = calculatePipsPoints(priceDiffSL, selectedSymbol);
+            const tpPipsPoints = calculatePipsPoints(priceDiffTP, selectedSymbol);
+            const pendingPips = calculatePipsPoints(priceDiffPending, selectedSymbol);
+
+            // Pending Pips Validation
+            const rules = pendingPipsRules[selectedSymbol];
+            if (rules) {
+                let pendingPipsValid = true;
+                let message = '';
+                // Use Math.abs for pendingPips comparison as rules are for absolute values
+                if (rules.min !== undefined && Math.abs(pendingPips) < rules.min) {
+                    pendingPipsValid = false;
+                    message += `Pending Pips minimal ${formatNumber(rules.min, 1)}. `;
+                }
+                if (rules.max !== undefined && Math.abs(pendingPips) > rules.max) {
+                    pendingPipsValid = false;
+                    message += `Pending Pips maksimal ${formatNumber(rules.max, 1)}.`;
+                }
+                if (!pendingPipsValid) {
+                    pendingPipsNote.textContent = message.trim();
+                    pendingPipsNote.classList.remove('hidden');
+                    inputs.openPrice.classList.add('border-red-500'); // Changed from priceNow to openPrice
+                    isValid = false;
+                }
+            }
+            
+            if (!isValid) {
+                // Return a default/placeholder object with all expected properties, but with zero/N/A values
+                return {
+                    rowId,
+                    symbol: selectedSymbol,
+                    tradeType,
+                    balance: isNaN(balance) ? 0 : balance, // Keep original balance if valid, else 0
+                    entryTime: new Date().toISOString(),
+                    openPrice: isNaN(openPrice) ? 0 : openPrice,
+                    slPrice: isNaN(slPrice) ? 0 : slPrice,
+                    tpPrice: isNaN(tpPrice) ? 0 : tpPrice,
+                    priceNow: isNaN(priceNow) ? 0 : priceNow,
+                    pendingPips: 0,
+                    slPips: 0,
+                    tpPips: 0,
+                    rrPips: 0,
+                    rrPercentage: { sl: 0, tp: 0 }, // Ensure rrPercentage is always an object with sl and tp
+                    lotSize: 0,
+                    nettSL: 0,
+                    nettTP: 0,
+                    error: true, // Keep the error flag
+                    assetData: getAssetData(selectedSymbol), // Still need assetData for decimals
+                    riskPercent: isNaN(riskPercent) ? 0 : riskPercent,
+                    rawPriceDiffSL: 0,
+                    rawPriceDiffTP: 0,
+                    note: note || '-'
+                };
+            }
+
+
+            const riskAmount = balance * (cappedRiskPercent / 100);
+            const lotSize = (Math.abs(slPipsPoints) > 0 && pipPointValuePerStandardLot > 0) ? Math.floor(riskAmount / (Math.abs(slPipsPoints) * pipPointValuePerStandardLot) / minLotIncrement) * minLotIncrement : 0;
+            const nettSL = -(lotSize * Math.abs(slPipsPoints) * pipPointValuePerStandardLot);
+            const nettTP = (lotSize * tpPipsPoints * pipPointValuePerStandardLot);
+
+            const rrPips = Math.abs(slPipsPoints) > 0 ? Math.abs(tpPipsPoints) / Math.abs(slPipsPoints) : 0;
+            const [percentageSL, percentageTP] = balance > 0 ? [(Math.abs(nettSL) / balance) * 100, (nettTP / balance) * 100] : [0, 0];
+
+            return { rowId, symbol: selectedSymbol, tradeType, balance, entryTime: new Date().toISOString(), openPrice, slPrice, tpPrice, priceNow, pendingPips, slPips: slPipsPoints, tpPips: tpPipsPoints, rrPips, rrPercentage: { sl: percentageSL, tp: percentageTP }, lotSize, nettSL, nettTP, error: false, assetData, riskPercent: cappedRiskPercent, rawPriceDiffSL: priceDiffSL, rawPriceDiffTP: priceDiffTP, note };
+        }
+
+        function displayCalculationDetails(result) {
+            calculationDetailsContainer.innerHTML = '';
+            // This section is now hidden by default and might be used for single-plan details if needed in the future
+            // For now, it won't display anything unless explicitly made visible and populated.
+        }
+
+        function calculateAllRows() {
+            console.log("Calculating all rows...");
+            calculatedPlansData = []; // Clear previous calculated plans
+            const allInputRows = document.querySelectorAll('.input-row');
+            if (allInputRows.length === 0) {
+                renderCalculatedPlans(); // Render empty table
+                return;
+            }
+            allInputRows.forEach(row => {
+                const rowId = row.id.split('-')[1];
+                const result = calculateRow(rowId);
+                if (result) {
+                    calculatedPlansData.push(result);
+                    if (db && userId !== 'anonymous') {
+                        saveCalculatedPlan(userId, result);
+                    }
+                }
+            });
+            renderCalculatedPlans();
+            saveDataToLocalStorage();
+            console.log("Calculation complete. Calculated Plans:", calculatedPlansData.length);
+        }
+
+        function renderCalculatedPlans() {
+            console.log("Rendering calculated plans. Data length:", calculatedPlansData.length);
+            calculatedPlansBody.innerHTML = '';
+            if (calculatedPlansData.length === 0) {
+                calculatedPlansBody.innerHTML = `<tr><td colspan="17" class="py-4 text-center text-gray-500">Belum ada rencana trading baru.</td></tr>`;
+                return;
+            }
+            calculatedPlansData.forEach(plan => {
+                const { symbol, tradeType, balance, entryTime, openPrice, slPrice, tpPrice, pendingPips, slPips, tpPips, rrPips, rrPercentage, lotSize, nettSL, nettTP, note, assetData, rowId } = plan;
+                const slPipsDisplay = Math.abs(slPips); const tpPipsDisplay = tpPips; const pendingPipsDisplay = pendingPips;
+                const slPipsClass = slPipsDisplay === 0 ? 'negative-value' : 'neutral-value'; const tpPipsClass = tpPipsDisplay > 0 ? 'positive-value' : 'negative-value';
+                const pendingPipsClass = pendingPipsDisplay >= 0 ? 'positive-value' : 'negative-value'; const lotSizeClass = parseFloat(lotSize) === 0 ? 'negative-value' : 'neutral-value';
+                const nettSLClass = 'negative-value'; const nettTPClass = nettTP >= 0 ? 'positive-value' : 'negative-value';
+                const rrPipsFormatted = rrPips > 0 ? '1:' + formatNumber(rrPips, 1) : 'N/A'; const rrPipsClass = rrPips > 0 ? 'positive-value' : 'neutral-value';
+                const rrPercentageClass = rrPercentage.tp >= 0 ? 'positive-value' : 'negative-value';
+                const entryTimeFormatted = new Date(entryTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const rowHtml = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-neutral-value">${symbol || 'N/A'}</td><td class="py-3 px-4 font-semibold ${tradeType === 'BUY' ? 'positive-value' : 'negative-value'}">${tradeType || 'N/A'}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatCurrency(balance, 'USD')}</td><td class="py-3 px-4 text-neutral-value">${entryTimeFormatted}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatNumber(openPrice, assetData.decimals)}</td><td class="py-3 px-4 text-neutral-value">${formatNumber(slPrice, assetData.decimals)}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatNumber(tpPrice, assetData.decimals)}</td><td class="py-3 px-4 ${pendingPipsClass}">${formatNumber(pendingPipsDisplay, 1)}</td>
+                        <td class="py-3 px-4 ${slPipsClass}">${formatNumber(slPipsDisplay, 1)}</td><td class="py-3 px-4 ${tpPipsClass}">${formatNumber(tpPipsDisplay, 1)}</td>
+                        <td class="py-3 px-4 ${rrPipsClass}">${rrPipsFormatted}</td><td class="py-3 px-4 ${rrPercentageClass}">${formatNumber(rrPercentage.sl, 2)}% : ${formatNumber(rrPercentage.tp, 2)}%</td>
+                        <td class="py-3 px-4 ${lotSizeClass}">${formatNumber(lotSize, 2)}</td><td class="py-3 px-4 ${nettSLClass}">${formatCurrency(nettSL, 'USD')}</td>
+                        <td class="py-3 px-4 ${nettTPClass}">${formatCurrency(nettTP, 'USD')}</td><td class="py-3 px-4 text-neutral-value">${note || '-'}</td>
+                        <td class="py-3 px-4 text-center action-buttons-cell">
+                            <button type="button" class="action-button-small" data-row-id="${rowId}" data-outcome="Running" data-from-section="calculated">Set Running</button>
+                        </td>
+                    </tr>
+                `;
+                calculatedPlansBody.insertAdjacentHTML('beforeend', rowHtml);
+            });
+            document.querySelectorAll('#calculatedPlansBody .action-button-small').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const rowId = event.target.dataset.rowId;
+                    setRunning(rowId);
+                });
+            });
+        }
+
+        function renderRunningPlans() {
+            console.log("Rendering running plans. Data length:", runningPlansData.length);
+            runningPlansBody.innerHTML = '';
+            if (runningPlansData.length === 0) {
+                runningPlansBody.innerHTML = `<tr><td colspan="17" class="py-4 text-center text-gray-500">Belum ada rencana trading aktif.</td></tr>`;
+                return;
+            }
+            runningPlansData.forEach(plan => {
+                const { symbol, tradeType, balance, entryTime, openPrice, slPrice, tpPrice, pendingPips, slPips, tpPips, rrPips, rrPercentage, lotSize, nettSL, nettTP, note, assetData, rowId } = plan;
+                const slPipsDisplay = Math.abs(slPips); const tpPipsDisplay = tpPips; const pendingPipsDisplay = pendingPips;
+                const slPipsClass = slPipsDisplay === 0 ? 'negative-value' : 'neutral-value'; const tpPipsClass = tpPipsDisplay > 0 ? 'positive-value' : 'negative-value';
+                const pendingPipsClass = pendingPipsDisplay >= 0 ? 'positive-value' : 'negative-value'; const lotSizeClass = parseFloat(lotSize) === 0 ? 'negative-value' : 'neutral-value';
+                const nettSLClass = 'negative-value'; const nettTPClass = nettTP >= 0 ? 'positive-value' : 'negative-value';
+                const rrPipsFormatted = rrPips > 0 ? '1:' + formatNumber(rrPips, 1) : 'N/A'; const rrPipsClass = rrPips > 0 ? 'positive-value' : 'neutral-value';
+                const rrPercentageClass = rrPercentage.tp >= 0 ? 'positive-value' : 'negative-value';
+                const entryTimeFormatted = new Date(entryTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const rowHtml = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-neutral-value">${symbol || 'N/A'}</td><td class="py-3 px-4 font-semibold ${tradeType === 'BUY' ? 'positive-value' : 'negative-value'}">${tradeType || 'N/A'}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatCurrency(balance, 'USD')}</td><td class="py-3 px-4 text-neutral-value">${entryTimeFormatted}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatNumber(openPrice, assetData.decimals)}</td><td class="py-3 px-4 text-neutral-value">${formatNumber(slPrice, assetData.decimals)}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatNumber(tpPrice, assetData.decimals)}</td><td class="py-3 px-4 ${pendingPipsClass}">${formatNumber(pendingPipsDisplay, 1)}</td>
+                        <td class="py-3 px-4 ${slPipsClass}">${formatNumber(slPipsDisplay, 1)}</td><td class="py-3 px-4 ${tpPipsClass}">${formatNumber(tpPipsDisplay, 1)}</td>
+                        <td class="py-3 px-4 ${rrPipsClass}">${rrPipsFormatted}</td><td class="py-3 px-4 ${rrPercentageClass}">${formatNumber(rrPercentage.sl, 2)}% : ${formatNumber(rrPercentage.tp, 2)}%</td>
+                        <td class="py-3 px-4 ${lotSizeClass}">${formatNumber(lotSize, 2)}</td><td class="py-3 px-4 ${nettSLClass}">${formatCurrency(nettSL, 'USD')}</td>
+                        <td class="py-3 px-4 ${nettTPClass}">${formatCurrency(nettTP, 'USD')}</td><td class="py-3 px-4 text-neutral-value">${note || '-'}</td>
+                        <td class="py-3 px-4 text-center action-buttons-cell">
+                            <button type="button" class="action-button-small" data-row-id="${rowId}" data-outcome="Cancel" data-from-section="running">CANCEL</button>
+                            <button type="button" class="action-button-small" data-row-id="${rowId}" data-outcome="Stop Loss" data-from-section="running">STOP LOSS</button>
+                            <button type="button" class="action-button-small" data-row-id="${rowId}" data-outcome="Take Profit" data-from-section="running">TAKE PROFIT</button>
+                        </td>
+                    </tr>
+                `;
+                runningPlansBody.insertAdjacentHTML('beforeend', rowHtml);
+            });
+            document.querySelectorAll('#runningPlansBody .action-button-small').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    const rowId = event.target.dataset.rowId;
+                    const outcome = event.target.dataset.outcome;
+                    const fromSection = event.target.dataset.fromSection;
+                    completeTrade(rowId, outcome, fromSection);
+                });
+            });
+        }
+
+        async function renderExecutedPlans() {
+            console.log("Rendering executed plans. Data length:", executedPlansData.length);
+            executedPlansBody.innerHTML = '';
+            if (executedPlansData.length === 0) { executedPlansBody.innerHTML = `<tr><td colspan="18" class="py-4 text-center text-gray-500">Belum ada rencana trading yang selesai.</td></tr>`; return; }
+            executedPlansData.forEach(plan => {
+                const { symbol, tradeType, balance, entryTime, openPrice, slPrice, tpPrice, pendingPips, slPips, tpPips, rrPips, rrPercentage, lotSize, nettSL, nettTP, note, assetData, outcome, timestamp } = plan;
+                const slPipsDisplay = Math.abs(slPips); const tpPipsDisplay = tpPips; const pendingPipsDisplay = pendingPips;
+                const slPipsClass = slPipsDisplay === 0 ? 'negative-value' : 'neutral-value'; const tpPipsClass = tpPipsDisplay > 0 ? 'positive-value' : 'negative-value';
+                const pendingPipsClass = pendingPipsDisplay >= 0 ? 'positive-value' : 'negative-value'; const lotSizeClass = parseFloat(lotSize) === 0 ? 'negative-value' : 'neutral-value';
+                const nettSLClass = 'negative-value'; const nettTPClass = nettTP >= 0 ? 'positive-value' : 'negative-value';
+                const rrPipsFormatted = rrPips > 0 ? '1:' + formatNumber(rrPips, 1) : 'N/A'; const rrPipsClass = rrPips > 0 ? 'positive-value' : 'neutral-value';
+                const rrPercentageClass = rrPercentage.tp >= 0 ? 'positive-value' : 'negative-value';
+                const outcomeText = outcome === 'Cancel' ? 'Dibatalkan' : (outcome === 'Stop Loss' ? 'Selesai: Stop Loss' : (outcome === 'Take Profit' ? 'Selesai: Take Profit' : 'Running')); // 'Running' is unlikely here if it's executed
+                const entryTimeFormatted = new Date(entryTime).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const exitTimeFormatted = new Date(timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                const rowHtml = `
+                    <tr class="hover:bg-gray-50">
+                        <td class="py-3 px-4 text-neutral-value">${symbol || 'N/A'}</td><td class="py-3 px-4 font-semibold ${tradeType === 'BUY' ? 'positive-value' : 'negative-value'}">${tradeType || 'N/A'}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatCurrency(balance, 'USD')}</td><td class="py-3 px-4 text-neutral-value">${entryTimeFormatted}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatNumber(openPrice, assetData.decimals)}</td><td class="py-3 px-4 text-neutral-value">${formatNumber(slPrice, assetData.decimals)}</td>
+                        <td class="py-3 px-4 text-neutral-value">${formatNumber(tpPrice, assetData.decimals)}</td><td class="py-3 px-4 ${pendingPipsClass}">${formatNumber(pendingPipsDisplay, 1)}</td>
+                        <td class="py-3 px-4 ${slPipsClass}">${formatNumber(slPipsDisplay, 1)}</td><td class="py-3 px-4 ${tpPipsClass}">${formatNumber(tpPipsDisplay, 1)}</td>
+                        <td class="py-3 px-4 ${rrPipsClass}">${rrPipsFormatted}</td><td class="py-3 px-4 ${rrPercentageClass}">${formatNumber(rrPercentage.sl, 2)}% : ${formatNumber(rrPercentage.tp, 2)}%</td>
+                        <td class="py-3 px-4 ${lotSizeClass}">${formatNumber(lotSize, 2)}</td><td class="py-3 px-4 ${nettSLClass}">${formatCurrency(nettSL, 'USD')}</td>
+                        <td class="py-3 px-4 ${nettTPClass}">${formatCurrency(nettTP, 'USD')}</td><td class="py-3 px-4 text-neutral-value">${note || '-'}</td>
+                        <td class="py-3 px-4 text-center"><span>${outcomeText}</span></td><td class="py-3 px-4 text-neutral-value">${exitTimeFormatted}</td>
+                    </tr>
+                `;
+                executedPlansBody.insertAdjacentHTML('beforeend', rowHtml);
+            });
+            updateRiskRewardStatistics(); console.log("Executed plans rendered.");
+        }
+
+        async function completeTrade(rowId, outcome, fromSection) {
+            console.log(`Completing trade for rowId: ${rowId} with outcome: ${outcome} from section: ${fromSection}`);
+            let planToExecute;
+            if (fromSection === 'calculated') {
+                const index = calculatedPlansData.findIndex(plan => plan.rowId === rowId);
+                if (index !== -1) {
+                    planToExecute = calculatedPlansData.splice(index, 1)[0];
+                    if (db && userId !== 'anonymous') {
+                        await deleteCalculatedPlan(userId, rowId);
+                    }
+                }
+            } else if (fromSection === 'running') {
+                const index = runningPlansData.findIndex(plan => plan.rowId === rowId);
+                if (index !== -1) {
+                    planToExecute = runningPlansData.splice(index, 1)[0];
+                    if (db && userId !== 'anonymous') {
+                        await deleteRunningPlan(userId, rowId);
+                    }
+                }
+            }
+
+            if (planToExecute) {
+                planToExecute.outcome = outcome;
+                planToExecute.timestamp = new Date().toISOString();
+                executedPlansData.push(planToExecute);
+                
+                if (db && userId !== 'anonymous') {
+                    await saveExecutedPlan(userId, planToExecute);
+                } else {
+                    saveDataToLocalStorage(); // Fallback to local storage
+                }
+
+                renderCalculatedPlans(); // Re-render calculated plans
+                renderRunningPlans();   // Re-render running plans
+                renderExecutedPlans();  // Re-render executed plans
+                
+                // Explicitly call summary and risk/reward updates
+                calculateSummaryStatistics();
+                updateRiskRewardStatistics();
+                checkTradeLimits();
+                displayLimitNotification(limitNotificationMessage);
+
+                // Destroy and reset chart rendering flags
+                for (const sectionId in chartSections) {
+                    const chartInfo = chartSections[sectionId];
+                    if (chartInfo.chartInstance && chartInfo.chartInstance()) { chartInfo.chartInstance().destroy(); chartInfo.setInstance(null); chartInfo.hasRendered = false; }
+                }
+                console.log("Trade completed and data updated.");
+            } else { console.warn(`Trade with rowId ${rowId} not found in ${fromSection} plans.`); }
+        }
+
+        async function setRunning(rowId) {
+            console.log(`Setting trade for rowId: ${rowId} to Running`);
+            const index = calculatedPlansData.findIndex(plan => plan.rowId === rowId);
+            if (index !== -1) {
+                const planToRun = calculatedPlansData.splice(index, 1)[0];
+                planToRun.status = 'Running'; // Add a status property
+                runningPlansData.push(planToRun);
+
+                if (db && userId !== 'anonymous') {
+                    await deleteCalculatedPlan(userId, rowId);
+                    await saveRunningPlan(userId, planToRun);
+                } else {
+                    saveDataToLocalStorage();
+                }
+                renderCalculatedPlans();
+                renderRunningPlans();
+                console.log("Trade moved to Running plans.");
+            } else {
+                console.warn(`Trade with rowId ${rowId} not found in calculated plans.`);
+            }
+        }
+
+        // --- DYNAMIC INPUT ROW MANAGEMENT ---
+        function addInputRow(initialData = {}) {
+            rowCounter++; const newRowId = `inputRow-${rowCounter}`;
+            const groupedAssets = { 'Forex Mayor': [], 'Forex Cross Rate': [], 'Forex Eksotis': [], 'Komoditas': [], 'Indeks': [], 'Kripto': [] };
+            Object.keys(assetValues).forEach(symbol => {
+                const asset = assetValues[symbol]; let categoryLabel;
+                switch (asset.type) {
+                    case 'forexMajor': categoryLabel = 'Forex Mayor'; break; case 'forexCross': categoryLabel = 'Forex Cross Rate'; break;
+                    case 'forexExotic': categoryLabel = 'Forex Eksotis'; break; case 'commodity': categoryLabel = 'Komoditas'; break;
+                    case 'index': categoryLabel = 'Indeks'; break; case 'crypto': categoryLabel = 'Kripto'; break; default: categoryLabel = 'Lainnya';
+                }
+                if (!groupedAssets[categoryLabel]) groupedAssets[categoryLabel] = [];
+                groupedAssets[categoryLabel].push(symbol);
+            });
+            let symbolsOptions = '<option value="" disabled selected>Pilih Aset</option>'; // Added default option
+            const categoryOrder = ['Forex Mayor', 'Forex Cross Rate', 'Forex Eksotis', 'Komoditas', 'Indeks', 'Kripto', 'Lainnya'];
+            categoryOrder.forEach(category => {
+                if (groupedAssets[category] && groupedAssets[category].length > 0) {
+                    symbolsOptions += `<optgroup label="${category}">`;
+                    groupedAssets[category].sort().forEach(symbol => { symbolsOptions += `<option value="${symbol}">${symbol}</option>`; });
+                    symbolsOptions += `</optgroup>`;
+                }
+            });
+
+            const rowHtml = `
+                <div id="${newRowId}" class="input-row bg-white p-6 rounded-lg border border-gray-200 relative">
+                    <button type="button" class="delete-row-btn absolute top-3 right-3"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg></button>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
+                        <div><label for="symbol-${rowCounter}" class="block text-sm input-label mb-1">Aset</label><select id="symbol-${rowCounter}" name="symbol" class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gray-300 focus:border-gray-300 sm:text-sm select-field">${symbolsOptions}</select></div>
+                        <div><label for="tradeType-${rowCounter}" class="block text-sm input-label mb-1">Tipe Trade</label><div class="flex rounded-md shadow-sm"><button type="button" id="buyBtn-${rowCounter}" class="buy-button w-1/2 py-2 px-4 rounded-l-md border text-center font-medium">BUY</button><button type="button" id="sellBtn-${rowCounter}" class="sell-button w-1/2 py-2 px-4 rounded-r-md border text-center font-medium">SELL</button></div></div>
+                        <div><label for="balance-${rowCounter}" class="block text-sm input-label mb-1">Balance Akun ($)</label><input type="number" id="balance-${rowCounter}" name="balance" step="0.01" value="${initialData.balance !== undefined ? initialData.balance : ''}" placeholder="Cth: 10000" class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm input-field"></div>
+                        <div class="input-group-percent"><label for="riskPercent-${rowCounter}" class="block text-sm input-label mb-1">Risiko (%)</label><div class="flex mt-1"><input type="number" id="riskPercent-${rowCounter}" name="riskPercent" step="0.01" value="${initialData.riskPercent !== undefined ? initialData.riskPercent : ''}" placeholder="Cth: 0.2" class="block w-full border rounded-l-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm input-field"><span class="inline-flex items-center px-3 border border-l-0 rounded-r-md text-sm font-medium"> % </span></div><p id="riskLimitNote-${rowCounter}" class="text-red-500 text-xs mt-1 hidden">Risiko maksimal adalah ${MAX_RISK_PER_TRADE}%</p></div>
+                        <div><label for="priceNow-${rowCounter}" class="block text-sm input-label mb-1">Price Now</label><input type="number" id="priceNow-${rowCounter}" name="priceNow" step="any" value="${initialData.priceNow !== undefined ? initialData.priceNow : ''}" placeholder="Cth: 1.07500 / 35000.50" class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm input-field"></div>
+                        <div><label for="openPrice-${rowCounter}" class="block text-sm input-label mb-1">Open Price</label><input type="number" id="openPrice-${rowCounter}" name="openPrice" step="any" value="${initialData.openPrice !== undefined ? initialData.openPrice : ''}" placeholder="Cth: 1.07500 / 35000.50" class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm input-field">
+                        <p id="pendingPipsNote-${rowCounter}" class="text-red-500 text-xs mt-1 hidden"></p></div> <!-- Moved pendingPipsNote here -->
+                        <div><label for="slPrice-${rowCounter}" class="block text-sm input-label mb-1">SL Price</label><input type="number" id="slPrice-${rowCounter}" name="slPrice" step="any" value="${initialData.slPrice !== undefined ? initialData.slPrice : ''}" placeholder="Cth: 1.07000 / 34900.00" class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm input-field"></div>
+                        <div><label for="tpPrice-${rowCounter}" class="block text-sm input-label mb-1">TP Price</label><input type="number" id="tpPrice-${rowCounter}" name="tpPrice" step="any" value="${initialData.tpPrice !== undefined ? initialData.tpPrice : ''}" placeholder="Cth: 1.09000 / 35500.00" class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm input-field"></div>
+                        <div><label for="note-${rowCounter}" class="block text-sm input-label mb-1">Catatan (Opsional)</label><input type="text" id="note-${rowCounter}" name="note" value="${initialData.note !== undefined ? initialData.note : ''}" placeholder="Cth: Breakout strategy" class="mt-1 block w-full border rounded-md shadow-sm py-2 px-3 focus:outline-none sm:text-sm input-field"></div>
+                    </div>
+                </div>
+            `;
+            inputRowsContainer.insertAdjacentHTML('beforeend', rowHtml);
+
+            const buyBtn = document.getElementById(`buyBtn-${rowCounter}`); const sellBtn = document.getElementById(`sellBtn-${rowCounter}`);
+            if (initialData.tradeType === 'BUY') { buyBtn.classList.add('active'); sellBtn.classList.remove('active'); }
+            else if (initialData.tradeType === 'SELL') { sellBtn.classList.add('active'); buyBtn.classList.remove('active'); }
+            else { buyBtn.classList.add('active'); sellBtn.classList.remove('active'); }
+            
+            // Set the symbol value after options are populated
+            if (initialData.symbol) {
+                const symbolSelect = document.getElementById(`symbol-${rowCounter}`);
+                if (symbolSelect) {
+                    symbolSelect.value = initialData.symbol;
+                }
+            }
+
+            const riskPercentInput = document.getElementById(`riskPercent-${rowCounter}`); const riskLimitNote = document.getElementById(`riskLimitNote-${rowCounter}`);
+            riskPercentInput.addEventListener('input', () => {
+                let value = parseFloat(riskPercentInput.value);
+                if (isNaN(value)) { riskLimitNote.classList.add('hidden'); return; }
+                if (value > MAX_RISK_PER_TRADE) { riskPercentInput.value = MAX_RISK_PER_TRADE; riskLimitNote.classList.remove('hidden'); } else { riskLimitNote.classList.add('hidden'); }
+            });
+            document.getElementById(newRowId).scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            console.log("Input row added:", newRowId);
+        }
+
+        // --- EXPORT FUNCTIONS ---
+        function exportToCsv(filename, dataArray, headers) {
+            if (dataArray.length === 0) { console.log('Tidak ada data untuk diunduh.'); return; }
+            let csvContent = headers.join(',') + '\n';
+            dataArray.forEach(row => { csvContent += row.map(item => (typeof item === 'string' && item.includes(',')) ? `"${item.replace(/"/g, '""')}"` : item).join(',') + '\n'; });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            if (link.download !== undefined) { const url = URL.createObjectURL(blob); link.setAttribute('href', url); link.setAttribute('download', filename); link.style.visibility = 'hidden'; document.body.appendChild(link); link.click(); document.body.removeChild(link); }
+        }
+
+        async function exportToPdf(elementId, filename) {
+            const element = document.getElementById(elementId);
+            if (!element) { console.log('Elemen tidak ditemukan untuk diunduh PDF.'); return; }
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:10px;z-index:1000;';
+            loadingDiv.textContent = 'Membuat PDF...'; document.body.appendChild(loadingDiv);
+            try {
+                const canvas = await html2canvas(element, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png'); const { jsPDF } = window.jspdf; const pdf = new jsPDF('p', 'mm', 'a4');
+                const imgWidth = 210; const pageHeight = 297; const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight; let position = 0;
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight); heightLeft -= pageHeight;
+                while (heightLeft >= 0) { position = heightLeft - imgHeight; pdf.addPage(); pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight); heightLeft -= pageHeight; }
+                pdf.save(filename);
+            } catch (error) { console.error("Error generating PDF:", error); console.log('Gagal membuat PDF: ' + error.message); }
+            finally { document.body.removeChild(loadingDiv); }
+        }
+
+        // --- Photo Upload Functions ---
+        function drawImageCover(ctx, img, canvasWidth, canvasHeight) {
+            const imgAspectRatio = img.width / img.height;
+            const canvasAspectRatio = canvasWidth / canvasHeight;
+
+            let sx, sy, sWidth, sHeight; // Source image coordinates and dimensions
+            let dx, dy, dWidth, dHeight; // Destination canvas coordinates and dimensions
+
+            if (imgAspectRatio > canvasAspectRatio) {
+                // Image is wider than canvas aspect ratio, crop horizontally
+                sHeight = img.height;
+                sWidth = sHeight * canvasAspectRatio;
+                sx = (img.width - sWidth) / 2;
+                sy = 0;
+            } else {
+                // Image is taller than canvas aspect ratio, crop vertically
+                sWidth = img.width;
+                sHeight = sWidth / canvasAspectRatio;
+                sx = 0;
+                sy = (img.height - sHeight) / 2;
+            }
+
+            dx = 0;
+            dy = 0;
+            dWidth = canvasWidth;
+            dHeight = canvasHeight;
+
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            ctx.drawImage(img, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+        }
+
+        function renderPhotoGallery() {
+            photoSlides.innerHTML = ''; // Clear existing images
+            if (userPhotos.length === 0) {
+                photoSlides.innerHTML = '<img src="https://placehold.co/240x240/cccccc/ffffff?text=Add+Photos" alt="Placeholder" class="w-full h-full object-cover flex-shrink-0">';
+                prevPhotoBtn.classList.add('hidden');
+                nextPhotoBtn.classList.add('hidden');
+                photoCounter.classList.add('hidden');
+                deletePhotoIcon.classList.add('hidden'); // Ensure delete icon is hidden when no photos
+                return;
+            }
+
+            userPhotos.forEach((photoUrl, index) => {
+                const img = document.createElement('img');
+                img.src = photoUrl;
+                img.alt = `User Photo ${index + 1}`;
+                img.className = 'w-full h-full object-cover flex-shrink-0';
+                photoSlides.appendChild(img);
+            });
+
+            // Update carousel position
+            photoSlides.style.transform = `translateX(-${currentPhotoIndex * 100}%)`;
+
+            // Update navigation buttons and counter
+            prevPhotoBtn.classList.toggle('hidden', userPhotos.length <= 1 || currentPhotoIndex === 0);
+            nextPhotoBtn.classList.toggle('hidden', userPhotos.length <= 1 || currentPhotoIndex === userPhotos.length - 1);
+            photoCounter.classList.toggle('hidden', userPhotos.length === 0);
+            photoCounter.textContent = `${currentPhotoIndex + 1} / ${userPhotos.length}`;
+            // deletePhotoIcon.classList.toggle('hidden', userPhotos.length === 0); // This will be managed by long press now
+        }
+
+        function showNextPhoto() {
+            if (currentPhotoIndex < userPhotos.length - 1) {
+                currentPhotoIndex++;
+                renderPhotoGallery();
+            }
+        }
+
+        function showPrevPhoto() {
+            if (currentPhotoIndex > 0) {
+                currentPhotoIndex--;
+                renderPhotoGallery();
+            }
+        }
+
+        // Long press variables
+        let longPressTimer;
+        let isLongPress = false;
+        const LONG_PRESS_THRESHOLD = 500; // milliseconds
+        const MOVE_THRESHOLD = 10; // pixels
+
+        let startX, startY;
+
+        photoCarousel.addEventListener('mousedown', (e) => {
+            if (e.button !== 0) return; // Only left click
+            startX = e.clientX;
+            startY = e.clientY;
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                if (userPhotos.length > 0) {
+                    deletePhotoModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+                }
+            }, LONG_PRESS_THRESHOLD);
+        });
+
+        photoCarousel.addEventListener('mouseup', (e) => {
+            clearTimeout(longPressTimer);
+            if (!isLongPress) {
+                // This was a short click/tap
+                if (userPhotos.length >= MAX_PHOTOS) {
+                    const alertModal = document.createElement('div');
+                    alertModal.className = 'modal show';
+                    alertModal.innerHTML = `
+                        <div class="modal-content">
+                            <h3 class="text-lg font-semibold text-primary mb-4">Batas Unggahan Tercapai</h3>
+                            <p class="text-gray-700 mb-6">Anda hanya dapat mengunggah maksimal ${MAX_PHOTOS} foto.</p>
+                            <div class="flex justify-center mt-4">
+                                <button class="action-button" onclick="this.closest('.modal').remove(); document.body.style.overflow = '';">OK</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(alertModal);
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+                    return;
+                }
+                imageInput.click();
+            }
+            isLongPress = false; // Reset for next interaction
+        });
+
+        photoCarousel.addEventListener('mousemove', (e) => {
+            if (longPressTimer && (Math.abs(e.clientX - startX) > MOVE_THRESHOLD || Math.abs(e.clientY - startY) > MOVE_THRESHOLD)) {
+                clearTimeout(longPressTimer);
+                isLongPress = false; // It's a drag, not a long press
+            }
+        });
+
+        // For touch devices
+        photoCarousel.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isLongPress = false;
+            longPressTimer = setTimeout(() => {
+                isLongPress = true;
+                if (userPhotos.length > 0) {
+                    deletePhotoModal.classList.remove('hidden');
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+                }
+            }, LONG_PRESS_THRESHOLD);
+        });
+
+        photoCarousel.addEventListener('touchend', (e) => {
+            clearTimeout(longPressTimer);
+            if (!isLongPress) {
+                // This was a short click/tap
+                if (userPhotos.length >= MAX_PHOTOS) {
+                    const alertModal = document.createElement('div');
+                    alertModal.className = 'modal show';
+                    alertModal.innerHTML = `
+                        <div class="modal-content">
+                            <h3 class="text-lg font-semibold text-primary mb-4">Batas Unggahan Tercapai</h3>
+                            <p class="text-gray-700 mb-6">Anda hanya dapat mengunggah maksimal ${MAX_PHOTOS} foto.</p>
+                            <div class="flex justify-center mt-4">
+                                <button class="action-button" onclick="this.closest('.modal').remove(); document.body.style.overflow = '';">OK</button>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(alertModal);
+                    document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+                    return;
+                }
+                imageInput.click();
+            }
+            isLongPress = false; // Reset for next interaction
+        });
+
+        photoCarousel.addEventListener('touchmove', (e) => {
+            if (longPressTimer && (Math.abs(e.touches[0].clientX - startX) > MOVE_THRESHOLD || Math.abs(e.touches[0].clientY - startY) > MOVE_THRESHOLD)) {
+                clearTimeout(longPressTimer);
+                isLongPress = false; // It's a drag, not a long press
+            }
+        });
+
+        imageInput.addEventListener('change', (event) => {
+            const files = event.target.files;
+            if (files.length === 0) return;
+
+            const file = files[0]; // Only process the first file if multiple are selected, as we crop one by one
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentImageToCrop = new Image();
+                    currentImageToCrop.onload = () => {
+                        // Dynamically set canvas dimensions based on the modal's container
+                        // Ensure the canvas is visible and its container has dimensions
+                        photoUploadModal.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden'; // Prevent body scrolling
+                        
+                        // Get the actual computed dimensions of the canvas's parent container
+                        const canvasContainer = photoUploadModal.querySelector('.flex.justify-center.items-center');
+                        
+                        // Set canvas dimensions to match its container's current size
+                        imageCanvas.width = canvasContainer.clientWidth;
+                        imageCanvas.height = canvasContainer.clientHeight;
+
+                        // Draw the image to fit the canvas
+                        drawImageCover(ctx, currentImageToCrop, imageCanvas.width, imageCanvas.height);
+                    };
+                    currentImageToCrop.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                console.log('Silakan pilih file gambar yang valid.');
+            }
+        });
+
+        cropAndSaveBtn.addEventListener('click', async () => {
+            if (currentImageToCrop) {
+                const imageDataUrl = imageCanvas.toDataURL('image/png');
+                const targetIndex = userPhotos.length; // Add to the end
+                if (db && userId !== 'anonymous') {
+                    await saveProfilePicture(userId, imageDataUrl, targetIndex);
+                } else {
+                    userPhotos.push(imageDataUrl);
+                    savePhotosToLocalStorage();
+                }
+                currentPhotoIndex = targetIndex; // Show the newly added photo
+                renderPhotoGallery();
+                photoUploadModal.classList.add('hidden');
+                document.body.style.overflow = ''; // Restore body scrolling
+                imageInput.value = ''; // Clear input to allow re-uploading the same file
+                currentImageToCrop = null;
+            }
+        });
+
+        cancelPhotoBtn.addEventListener('click', () => {
+            photoUploadModal.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore body scrolling
+            imageInput.value = '';
+            currentImageToCrop = null;
+        });
+
+        // deletePhotoIcon.addEventListener('click', () => { // This is now handled by long press
+        //     if (userPhotos.length > 0) {
+        //         deletePhotoModal.classList.remove('hidden');
+        //     }
+        // });
+
+        confirmDeletePhotoBtn.addEventListener('click', async () => {
+            if (userPhotos.length > 0) {
+                const indexToDelete = currentPhotoIndex;
+                if (db && userId !== 'anonymous') {
+                    await deleteProfilePicture(userId, indexToDelete);
+                } else {
+                    userPhotos.splice(indexToDelete, 1);
+                    savePhotosToLocalStorage();
+                }
+                // Adjust currentPhotoIndex if the last photo was deleted
+                if (currentPhotoIndex >= userPhotos.length && userPhotos.length > 0) {
+                    currentPhotoIndex = userPhotos.length - 1;
+                } else if (userPhotos.length === 0) {
+                    currentPhotoIndex = 0;
+                }
+                renderPhotoGallery();
+            }
+            deletePhotoModal.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore body scrolling
+        });
+
+        cancelDeletePhotoBtn.addEventListener('click', () => {
+            deletePhotoModal.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore body scrolling
+        });
+
+        prevPhotoBtn.addEventListener('click', showPrevPhoto);
+        nextPhotoBtn.addEventListener('click', showNextPhoto);
+
+
+        // --- Limit Checking Logic (Refactored for single pass) ---
+        function checkTradeLimits() {
+            let overallInitialBalance = null, overallCurrentBalance = null, monthlyInitialBalance = null, monthlyCurrentBalance = null, dailyInitialBalance = null, dailyCurrentBalance = null;
+            const now = new Date(); const currentMonthYearIdentifier = `${now.getFullYear()}-${now.getMonth()}`; const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0).getTime();
+
+            executedPlansData.forEach(trade => {
+                if (trade.outcome === 'Cancel') {
+                    console.log("Skipping cancelled trade:", trade);
+                    return;
+                }
+                const profitLossAmount = (trade.outcome === 'Take Profit') ? trade.nettTP : (trade.outcome === 'Stop Loss' ? trade.nettSL : 0);
+                const tradeDate = new Date(trade.timestamp); const tradeTimestamp = tradeDate.getTime();
+                const tradeMonthYearIdentifier = `${tradeDate.getFullYear()}-${tradeDate.getMonth()}`;
+
+                // Overall balance calculation
+                if (overallInitialBalance === null) { overallInitialBalance = trade.balance; overallCurrentBalance = trade.balance; }
+                overallCurrentBalance += profitLossAmount;
+
+                // Monthly balance calculation
+                if (tradeMonthYearIdentifier === currentMonthYearIdentifier) {
+                    if (monthlyInitialBalance === null) { monthlyInitialBalance = trade.balance; monthlyCurrentBalance = trade.balance; }
+                    monthlyCurrentBalance += profitLossAmount;
+                }
+                // Daily balance calculation
+                if (tradeTimestamp >= todayStart && tradeTimestamp <= now.getTime()) {
+                    if (dailyInitialBalance === null) { dailyInitialBalance = trade.balance; dailyCurrentBalance = trade.balance; }
+                    dailyCurrentBalance += profitLossAmount;
+                }
+            });
+
+            const overallCumulativePercentageLoss = (overallInitialBalance !== null && overallInitialBalance !== 0) ? ((overallCurrentBalance - overallInitialBalance) / overallInitialBalance) * 100 : 0;
+            const currentMonthPercentageLoss = (monthlyInitialBalance !== null && monthlyInitialBalance !== 0) ? ((monthlyCurrentBalance - monthlyInitialBalance) / monthlyInitialBalance) * 100 : 0;
+            const currentDailyPercentageLoss = (dailyInitialBalance !== null && dailyInitialBalance !== 0) ? ((dailyCurrentBalance - dailyInitialBalance) / dailyInitialBalance) * 100 : 0;
+
+            const lastOverallLossBreachMonth = localStorage.getItem('lastOverallLossBreachMonth');
+            if (overallCumulativePercentageLoss <= OVERALL_MAX_LOSS_LIMIT) {
+                if (lastOverallLossBreachMonth === currentMonthYearIdentifier) { limitNotificationMessage = `Anda sudah mencapai batas kerugian maksimal (-${Math.abs(OVERALL_MAX_LOSS_LIMIT)}%) secara keseluruhan. Input data akan diaktifkan kembali pada tanggal 1 bulan berikutnya.`; return false; }
+                else { localStorage.setItem('lastOverallLossBreachMonth', currentMonthYearIdentifier); limitNotificationMessage = `Anda sudah mencapai batas kerugian maksimal (-${Math.abs(OVERALL_MAX_LOSS_LIMIT)}%) secara keseluruhan. Input data akan diaktifkan kembali pada tanggal 1 bulan berikutnya.`; return false; }
+            } else { if (lastOverallLossBreachMonth === currentMonthYearIdentifier) localStorage.removeItem('lastOverallLossBreachMonth'); }
+            if (currentMonthPercentageLoss <= MONTHLY_LOSS_LIMIT) { limitNotificationMessage = `Anda telah mencapai batas kerugian bulanan maksimum (-${Math.abs(MONTHLY_LOSS_LIMIT)}%). Input data akan diaktifkan kembali pada tanggal 1 bulan berikutnya.`; return false; }
+            if (currentDailyPercentageLoss <= DAILY_LOSS_LIMIT) { limitNotificationMessage = `Anda telah mencapai batas kerugian harian (-${Math.abs(DAILY_LOSS_LIMIT)}%). Input data akan diaktifkan kembali pada hari berikutnya.`; return false; }
+            limitNotificationMessage = ''; return true;
+        }
+
+        function displayLimitNotification(message) {
+            const notificationDiv = document.getElementById('limitNotification');
+            if (message) { notificationDiv.textContent = message; notificationDiv.classList.remove('hidden', 'error-message'); notificationDiv.classList.add('error-message'); }
+            else { notificationDiv.textContent = ''; notificationDiv.classList.add('hidden'); notificationDiv.classList.remove('error-message'); }
+        }
+
+        // --- EVENT LISTENERS ---
+        inputRowsContainer.addEventListener('click', function(event) {
+            const target = event.target;
+            if (target.classList.contains('buy-button')) { const rowId = target.id.split('-')[1]; document.getElementById(`sellBtn-${rowId}`).classList.remove('active'); target.classList.add('active'); }
+            else if (target.classList.contains('sell-button')) { const rowId = target.id.split('-')[1]; document.getElementById(`buyBtn-${rowId}`).classList.remove('active'); target.classList.add('active'); }
+            else if (target.closest('.delete-row-btn')) { const rowElement = target.closest('.input-row'); if (rowElement) { rowElement.remove(); /* No need to recalculate all rows here, only when calculateAllBtn is clicked */ saveDataToLocalStorage(); } }
+        });
+        document.getElementById('addInputRowBtn').addEventListener('click', () => {
+            if (checkTradeLimits()) { addInputRow(); saveDataToLocalStorage(); displayLimitNotification(''); }
+            else { displayLimitNotification(limitNotificationMessage); }
+        });
+        document.getElementById('calculateAllBtn').addEventListener('click', () => { calculateAllRows(); saveDataToLocalStorage(); });
+
+        // --- DELETE AND EXPORT DATA FUNCTIONALITY ---
+        deleteAndExportDataBtn.addEventListener('click', async () => {
+            if (executedPlansData.length === 0) { console.log('Tidak ada data rencana trading selesai untuk diunduh atau dihapus.'); return; }
+            // Using a custom modal for confirmation instead of window.confirm
+            const confirmDelete = await new Promise(resolve => {
+                const modal = document.createElement('div');
+                modal.className = 'modal show';
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <button class="modal-close-button" id="closeDeleteDataModalBtn">X</button>
+                        <h3 class="text-lg font-semibold text-primary mb-4">Hapus Semua Data Trading?</h3>
+                        <p class="text-gray-700 mb-6">Apakah Anda yakin ingin mengunduh dan menghapus semua data rencana trading selesai?</p>
+                        <div class="flex justify-center gap-3 mt-4">
+                            <button id="cancelDeleteDataConfirmBtn" class="action-button bg-gray-300 hover:bg-gray-400 text-gray-800">Batal</button>
+                            <button id="confirmDeleteDataConfirmBtn" class="action-button bg-red-600 hover:bg-red-700">Hapus</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
+
+                const cancelBtn = modal.querySelector('#cancelDeleteDataConfirmBtn');
+                const confirmBtn = modal.querySelector('#confirmDeleteDataConfirmBtn');
+                const closeBtn = modal.querySelector('#closeDeleteDataModalBtn');
+
+                cancelBtn.addEventListener('click', () => {
+                    modal.remove();
+                    document.body.style.overflow = '';
+                    resolve(false);
+                });
+
+                confirmBtn.addEventListener('click', () => {
+                    modal.remove();
+                    document.body.style.overflow = '';
+                    resolve(true);
+                });
+
+                closeBtn.addEventListener('click', () => {
+                    modal.remove();
+                    document.body.style.overflow = '';
+                    resolve(false); // Treat closing the modal as a cancellation
+                });
+            });
+
+            if (!confirmDelete) return;
+
+            const headers = ['Aset', 'Trade', 'Balance Akun', 'Waktu Masuk', 'Open Price', 'SL Price', 'TP Price', 'Pending Pips', 'SL Pips/Points', 'TP Pips/Points', 'R:R Pips', 'R:R % SL', 'R:R % TP', 'Lot/Units', 'Nett SL', 'Nett TP', 'Catatan', 'Hasil', 'Waktu Keluar'];
+            const dataToExport = executedPlansData.map(plan => [
+                plan.symbol || 'N/A', // Ensure symbol is exported
+                plan.tradeType, formatCurrency(plan.balance, 'USD').replace(/,/g, ''), new Date(plan.entryTime).toLocaleString('id-ID'), formatNumber(plan.openPrice, plan.assetData.decimals),
+                formatNumber(plan.slPrice, plan.assetData.decimals), formatNumber(plan.tpPrice, plan.assetData.decimals), formatNumber(plan.pendingPips, 1), formatNumber(Math.abs(plan.slPips), 1),
+                formatNumber(plan.tpPips, 1), plan.rrPips > 0 ? `1:${formatNumber(plan.rrPips, 1)}` : 'N/A', formatNumber(plan.rrPercentage.sl, 2), formatNumber(plan.rrPercentage.tp, 2),
+                formatNumber(plan.lotSize, 2), formatCurrency(plan.nettSL, 'USD').replace(/,/g, ''), formatCurrency(plan.nettTP, 'USD').replace(/,/g, ''), plan.note || '-',
+                plan.outcome, new Date(plan.timestamp).toLocaleString('id-ID')
+            ]);
+            exportToCsv(`Rencana_Trading_Selesai_${new Date().toISOString().slice(0, 10)}.csv`, dataToExport, headers);
+
+            // The deletion happens immediately after the download is initiated.
+            // For client-side JavaScript, there's no direct way to wait for the browser's download to complete.
+            // This is the standard and most practical implementation for this scenario.
+            if (db && userId !== 'anonymous') {
+                await deleteAllExecutedPlans(userId);
+            }
+            executedPlansData = []; localStorage.removeItem('lastOverallLossBreachMonth'); saveDataToLocalStorage();
+            renderExecutedPlans(); calculateSummaryStatistics(); updateRiskRewardStatistics();
+            for (const sectionId in chartSections) {
+                const chartInfo = chartSections[sectionId];
+                if (chartInfo.chartInstance && chartInfo.chartInstance()) { chartInfo.chartInstance().destroy(); chartInfo.setInstance(null); chartInfo.hasRendered = false; }
+            }
+            checkTradeLimits(); displayLimitNotification(limitNotificationMessage);
+            console.log('Data rencana trading selesai telah diunduh dan dihapus.');
+        });
+
+        // --- UPLOAD DATA FUNCTIONALITY ---
+        const hiddenFileInput = document.createElement('input');
+        hiddenFileInput.type = 'file'; hiddenFileInput.accept = '.csv'; hiddenFileInput.style.display = 'none';
+        document.body.appendChild(hiddenFileInput);
+        uploadDataBtn.addEventListener('click', () => uploadConfirmModal.classList.remove('hidden'));
+        confirmUploadBtn.addEventListener('click', () => { uploadConfirmModal.classList.add('hidden'); hiddenFileInput.click(); });
+        cancelUploadConfirmBtn.addEventListener('click', () => uploadConfirmModal.classList.add('hidden'));
+        hiddenFileInput.addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (e) => { // Made onload async
+                    try {
+                        const parsedData = parseCSV(e.target.result);
+                        if (db && userId !== 'anonymous') {
+                            // Delete existing data in Firestore before uploading new
+                            await deleteAllExecutedPlans(userId);
+                            // Add new data to Firestore
+                            const savePromises = parsedData.map(plan => saveExecutedPlan(userId, plan));
+                            await Promise.all(savePromises);
+                            console.log('Data berhasil diunggah dan diimpor ke Firestore.');
+                        } else {
+                            importExecutedPlans(parsedData); // Fallback to local storage
+                            console.log('Data berhasil diunggah dan diimpor ke Local Storage.');
+                        }
+                    }
+                    catch (error) { console.error('Error parsing or importing CSV:', error); console.error('Gagal mengunggah data. Pastikan format file CSV benar.'); }
+                    finally { hiddenFileInput.value = ''; }
+                };
+                reader.readAsText(file);
+            }
+        });
+
+        function parseCSV(csvString) {
+            const lines = csvString.trim().split('\n'); if (lines.length === 0) return [];
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            const dataRows = lines.slice(1);
+            const headerMap = {
+                'Aset': 'symbol', 'Trade': 'tradeType', 'Balance Akun': { key: 'balance', type: 'float', clean: (val) => parseFloat(val.replace(/[^0-9.-]+/g, "")) },
+                'Waktu Masuk': { key: 'entryTime', type: 'date' }, 'Open Price': { key: 'openPrice', type: 'float' }, 'SL Price': { key: 'slPrice', type: 'float' },
+                'TP Price': { key: 'tpPrice', type: 'float' }, 'Pending Pips': { key: 'pendingPips', type: 'float' }, 'SL Pips/Points': { key: 'slPips', type: 'float' },
+                'TP Pips/Points': { key: 'tpPips', type: 'float' }, 'R:R Pips': { key: 'rrPips', type: 'float', clean: (val) => parseFloat(val.replace('1:', '')) },
+                'R:R % SL': { key: 'rrPercentageSL', type: 'float', clean: (val) => parseFloat(val.replace('%', '')) },
+                'R:R % TP': { key: 'rrPercentageTP', type: 'float', clean: (val) => parseFloat(val.replace('%', '')) },
+                'Lot/Units': { key: 'lotSize', type: 'float' }, 'Nett SL': { key: 'nettSL', type: 'float', clean: (val) => parseFloat(val.replace(/[^0-9.-]+/g, "")) },
+                'Nett TP': { key: 'nettTP', type: 'float', clean: (val) => parseFloat(val.replace(/[^0-9.-]+/g, "")) },
+                'Catatan': 'note', 'Hasil': 'outcome', 'Waktu Keluar': { key: 'timestamp', type: 'date' }
+            };
+            return dataRows.map(row => {
+                const values = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(v => v.trim().replace(/"/g, ''));
+                const newPlan = {};
+                headers.forEach((header, index) => {
+                    const map = headerMap[header]; let value = values[index];
+                    if (map) {
+                        if (typeof map === 'string') newPlan[map] = value;
+                        else {
+                            if (map.clean) value = map.clean(value);
+                            else if (map.type === 'float') value = parseFloat(value);
+                            else if (map.type === 'date') { const date = new Date(value); value = isNaN(date.getTime()) ? null : date.toISOString(); if (isNaN(date.getTime())) console.warn(`Invalid date value for header '${header}': '${values[index]}'. Setting to null.`); }
+                            newPlan[map.key] = value;
+                        }
+                    }
+                });
+                newPlan.rrPercentage = { sl: newPlan.rrPercentageSL, tp: newPlan.rrPercentageTP }; delete newPlan.rrPercentageSL; delete newPlan.rrPercentageTP;
+                newPlan.assetData = getAssetData(newPlan.symbol);
+                newPlan.rowId = `imported-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+                if (newPlan.outcome === 'Stop Loss' && newPlan.slPips > 0) newPlan.slPips = -Math.abs(newPlan.slPips);
+                else if (newPlan.outcome === 'Take Profit' && newPlan.tpPips < 0) newPlan.tpPips = Math.abs(newPlan.tpPips);
+                return newPlan;
+            }).filter(plan => plan.symbol && plan.tradeType && plan.balance);
+        }
+
+        function importExecutedPlans(data) {
+            executedPlansData = data; saveDataToLocalStorage(); renderExecutedPlans();
+            checkTradeLimits(); displayLimitNotification(limitNotificationMessage);
+            calculateSummaryStatistics(); updateRiskRewardStatistics();
+            for (const sectionId in chartSections) {
+                const chartInfo = chartSections[sectionId];
+                if (chartInfo.chartInstance && chartInfo.chartInstance()) { chartInfo.chartInstance().destroy(); chartInfo.setInstance(null); chartInfo.hasRendered = false; }
+            }
+            console.log("Executed plans imported and re-rendered.");
+        }
+
+        // --- SUMMARY STATISTICS CALCULATION AND DISPLAY ---
+        function calculateSummaryStatistics() {
+            console.log("Calculating summary statistics...");
+            console.log("executedPlansData at start of calculateSummaryStatistics:", executedPlansData);
+
+            let totalPips = 0, initialBalance = null, finalBalance = null, firstTradeDate = null, totalTakeProfitTrades = 0, totalNonCancelledTrades = 0, totalSettledTrades = 0;
+            executedPlansData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            executedPlansData.forEach(trade => {
+                if (trade.outcome === 'Cancel') {
+                    console.log("Skipping cancelled trade:", trade);
+                    return;
+                }
+                totalNonCancelledTrades++;
+                totalSettledTrades++;
+
+                if (trade.outcome === 'Take Profit') {
+                    totalTakeProfitTrades++;
+                }
+
+                // Set firstTradeDate based on the earliest non-cancelled trade
+                if (firstTradeDate === null) {
+                    firstTradeDate = new Date(trade.timestamp);
+                }
+
+                let profitLossAmount = 0;
+                if (trade.outcome === 'Take Profit') {
+                    profitLossAmount = trade.nettTP;
+                } else if (trade.outcome === 'Stop Loss') {
+                    profitLossAmount = trade.nettSL;
+                }
+
+                totalPips += (trade.outcome === 'Take Profit') ? trade.tpPips : (trade.outcome === 'Stop Loss' ? trade.slPips : 0);
+
+                if (initialBalance === null) {
+                    initialBalance = trade.balance;
+                    finalBalance = trade.balance; // Initialize finalBalance with the first trade's balance
+                }
+                finalBalance += profitLossAmount; // Accumulate profit/loss to finalBalance
+                console.log(`Trade: ${trade.symbol}, Outcome: ${trade.outcome}, ProfitLoss: ${profitLossAmount}, Current Final Balance: ${finalBalance}`);
+            });
+
+            const totalSettledTradesSummaryElement = document.getElementById('totalSettledTradesSummary');
+            const totalPipsElement = document.getElementById('totalPipsSummary');
+            const overallPercentageElement = document.getElementById('overallPercentageSummary');
+            const finalBalanceElement = document.getElementById('finalBalanceSummary');
+            const probabilitySummaryElement = document.getElementById('probabilitySummary');
+            const joinTimeSummaryElement = document.getElementById('joinTimeSummary');
+
+            console.log("Summary Calculation Results:");
+            console.log("totalSettledTrades:", totalSettledTrades);
+            console.log("totalPips:", totalPips);
+            console.log("initialBalance:", initialBalance);
+            console.log("finalBalance:", finalBalance);
+            console.log("totalTakeProfitTrades:", totalTakeProfitTrades);
+            console.log("totalNonCancelledTrades:", totalNonCancelledTrades);
+            console.log("firstTradeDate:", firstTradeDate);
+
+
+            if (executedPlansData.length === 0 || totalSettledTrades === 0) { // Added totalSettledTrades === 0 check
+                totalSettledTradesSummaryElement.textContent = 'N/A';
+                totalPipsElement.textContent = 'N/A';
+                overallPercentageElement.textContent = 'N/A';
+                finalBalanceElement.textContent = 'N/A';
+                probabilitySummaryElement.textContent = 'N/A';
+                joinTimeSummaryElement.textContent = 'N/A'; // Set to N/A if no trades
+                totalPipsElement.classList.remove('negative-summary-value');
+                overallPercentageElement.classList.remove('negative-summary-value');
+                finalBalanceElement.classList.remove('negative-summary-value');
+                console.log("No relevant executed plans data for summary statistics. Displaying N/A.");
+                return;
+            }
+
+            let overallPercentageChange = (initialBalance !== null && initialBalance !== 0) ? ((finalBalance - initialBalance) / initialBalance) * 100 : 0;
+            const probability = totalNonCancelledTrades > 0 ? (totalTakeProfitTrades / totalNonCancelledTrades) * 100 : 0;
+
+            console.log("overallPercentageChange:", overallPercentageChange);
+            console.log("probability:", probability);
+
+            totalSettledTradesSummaryElement.textContent = totalSettledTrades;
+            totalSettledTradesSummaryElement.classList.remove('negative-summary-value'); // Should not be negative
+
+            totalPipsElement.textContent = formatNumber(totalPips, 2);
+            totalPipsElement.classList.toggle('negative-summary-value', totalPips < 0);
+
+            overallPercentageElement.textContent = formatNumber(overallPercentageChange, 2) + '%';
+            overallPercentageElement.classList.toggle('negative-summary-value', overallPercentageChange < 0);
+
+            finalBalanceElement.textContent = formatCurrency(finalBalance, 'USD');
+            finalBalanceElement.classList.toggle('negative-summary-value', finalBalance < initialBalance || finalBalance < 0);
+
+            probabilitySummaryElement.textContent = formatNumber(probability, 2) + '%';
+            probabilitySummaryElement.classList.remove('negative-summary-value'); // Probability won't be negative
+
+            // Update join time based on the first trade
+            if (firstTradeDate) {
+                joinTimeSummaryElement.textContent = firstTradeDate.toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+            } else {
+                joinTimeSummaryElement.textContent = 'N/A';
+            }
+            console.log("Summary statistics calculated and displayed.");
+        }
+
+        // --- RISK AND REWARD STATISTICS CALCULATION AND DISPLAY ---
+        function updateRiskRewardStatistics() {
+            console.log("Updating risk and reward statistics...");
+            const relevantTrades = executedPlansData.filter(trade => trade.outcome !== 'Cancel');
+            if (relevantTrades.length === 0) {
+                document.getElementById('avgRiskReward').innerHTML = `1 : <span class="text-black">N/A</span>`;
+                ['avgSignalSettledMonth', 'avgHoldingPeriod', 'avgTpPips', 'avgSlPips', 'consecutiveProfit', 'consecutiveLoss', 'averagePips', 'grossProfit', 'grossLoss', 'avgSignalSettledWeek', 'maxHoldingPeriod', 'maxTpPips', 'maxSlPips'].forEach(id => document.getElementById(id).innerHTML = `<span class="text-black">N/A</span>`);
+                console.log("No relevant trades for risk and reward statistics."); return;
+            }
+
+            let totalTpPips = 0, countTpTrades = 0, totalSlPipsAbsolute = 0, countSlTrades = 0, totalPips = 0, grossProfit = 0, grossLoss = 0, totalHoldingPeriodMs = 0, maxHoldingPeriodMs = 0;
+            let maxTpPips = -Infinity, maxSlPips = Infinity;
+            let currentProfitStreak = 0, maxProfitStreak = 0, currentProfitAmount = 0, maxProfitAmount = 0;
+            let currentLossStreak = 0, maxLossStreak = 0, currentLossAmount = 0, maxLossAmount = 0;
+            const monthlyTradeCounts = {}, weeklyTradeCounts = {};
+
+            relevantTrades.forEach(trade => {
+                const tradeDate = new Date(trade.timestamp);
+                if (trade.entryTime) {
+                    const holdingDuration = tradeDate.getTime() - new Date(trade.entryTime).getTime();
+                    totalHoldingPeriodMs += holdingDuration; if (holdingDuration > maxHoldingPeriodMs) maxHoldingPeriodMs = holdingDuration;
+                }
+                if (trade.outcome === 'Take Profit') {
+                    totalTpPips += trade.tpPips; countTpTrades++; totalPips += trade.tpPips; grossProfit += trade.nettTP; if (trade.tpPips > maxTpPips) maxTpPips = trade.tpPips;
+                    currentProfitStreak++; currentProfitAmount += trade.nettTP;
+                    if (currentProfitStreak > maxProfitStreak) { maxProfitStreak = currentProfitStreak; maxProfitAmount = currentProfitAmount; }
+                    currentLossStreak = 0; currentLossAmount = 0;
+                } else if (trade.outcome === 'Stop Loss') {
+                    totalSlPipsAbsolute += Math.abs(trade.slPips); countSlTrades++; totalPips += trade.slPips; grossLoss += trade.nettSL; if (trade.slPips < maxSlPips) maxSlPips = trade.slPips;
+                    currentLossStreak++; currentLossAmount += trade.nettSL;
+                    if (currentLossStreak > maxLossStreak) { maxLossStreak = currentLossStreak; maxLossAmount = currentLossAmount; }
+                    currentProfitStreak = 0; currentProfitAmount = 0;
+                }
+                const monthYear = `${tradeDate.getFullYear()}-${(tradeDate.getMonth() + 1).toString().padStart(2, '0')}`; monthlyTradeCounts[monthYear] = (monthlyTradeCounts[monthYear] || 0) + 1;
+                const startOfYear = new Date(tradeDate.getFullYear(), 0, 1);
+                const weekNumber = Math.ceil((Math.floor((tradeDate - startOfYear) / (24 * 3600 * 1000)) + startOfYear.getDay() + 1) / 7);
+                weeklyTradeCounts[`${tradeDate.getFullYear()}-${String(weekNumber).padStart(2, '0')}`] = (weeklyTradeCounts[`${tradeDate.getFullYear()}-${String(weekNumber).padStart(2, '0')}`] || 0) + 1;
+            });
+
+            const avgTpPips = countTpTrades > 0 ? totalTpPips / countTpTrades : 0;
+            const avgSlPips = countSlTrades > 0 ? totalSlPipsAbsolute / countSlTrades : 0;
+            const avgRiskReward = (avgSlPips > 0) ? avgTpPips / avgSlPips : 0;
+            const avgPips = relevantTrades.length > 0 ? totalPips / relevantTrades.length : 0;
+            const avgHoldingPeriodMs = relevantTrades.length > 0 ? totalHoldingPeriodMs / relevantTrades.length : 0;
+            const avgSignalSettledMonth = Object.keys(monthlyTradeCounts).length > 0 ? Object.values(monthlyTradeCounts).reduce((sum, count) => sum + count, 0) / Object.keys(monthlyTradeCounts).length : 0;
+            const avgSignalSettledWeek = Object.keys(weeklyTradeCounts).length > 0 ? Object.values(weeklyTradeCounts).reduce((sum, count) => sum + count, 0) / Object.keys(weeklyTradeCounts).length : 0;
+
+            document.getElementById('avgRiskReward').innerHTML = `1 : ${getColoredValueHtml(avgRiskReward, false, 1)}`;
+            document.getElementById('avgSignalSettledMonth').innerHTML = getColoredValueHtml(avgSignalSettledMonth, false, 0);
+            document.getElementById('avgHoldingPeriod').innerHTML = formatDuration(avgHoldingPeriodMs);
+            document.getElementById('avgTpPips').innerHTML = getColoredValueHtml(avgTpPips, false, 1);
+            document.getElementById('avgSlPips').innerHTML = getColoredValueHtml(avgSlPips, false, 1);
+            document.getElementById('consecutiveProfit').innerHTML = `${getColoredValueHtml(maxProfitStreak, false, 0)} (${getColoredValueHtml(maxProfitAmount, true)})`;
+            document.getElementById('consecutiveLoss').innerHTML = `${getColoredValueHtml(maxLossStreak, false, 0)} (${getColoredValueHtml(maxLossAmount, true)})`;
+            document.getElementById('averagePips').innerHTML = getColoredValueHtml(avgPips, false, 1);
+            document.getElementById('grossProfit').innerHTML = getColoredValueHtml(grossProfit, true);
+            document.getElementById('grossLoss').innerHTML = getColoredValueHtml(grossLoss, true);
+            document.getElementById('avgSignalSettledWeek').innerHTML = getColoredValueHtml(avgSignalSettledWeek, false, 0);
+            document.getElementById('maxHoldingPeriod').innerHTML = getColoredValueHtml(maxHoldingPeriodMs === 0 ? 'N/A' : formatDuration(maxHoldingPeriodMs), false, 1);
+            document.getElementById('maxTpPips').innerHTML = getColoredValueHtml(maxTpPips === -Infinity ? 'N/A' : maxTpPips, false, 1);
+            document.getElementById('maxSlPips').innerHTML = getColoredValueHtml(maxSlPips === Infinity ? 'N/A' : maxSlPips, false, 1);
+            console.log("Risk and reward statistics updated.");
+        }
+
+        const chartSections = {
+            'overallSummaryStatisticsSection': { render: calculateSummaryStatistics, chartInstance: () => null, setInstance: () => {}, canvasId: null, loadingId: null, errorId: null, noDataId: null, hasRendered: false },
+            'riskRewardStatisticsSection': { render: updateRiskRewardStatistics, chartInstance: () => null, setInstance: () => {}, canvasId: null, loadingId: null, errorId: null, noDataId: null, hasRendered: false },
+            'assetSuccessStatisticsSection': { render: fetchAndRenderPieChart, chartInstance: () => assetPieChart, setInstance: (chart) => assetPieChart = chart, canvasId: 'assetSuccessPieChart', loadingId: 'pieChartLoading', errorId: 'pieChartError', noDataId: 'pieChartNoData', hasRendered: false },
+            'dailyLineStatisticsSection': { render: fetchAndRenderDailyLineChart, chartInstance: () => dailyLineChart, setInstance: (chart) => dailyLineChart = chart, canvasId: 'dailyLineChart', loadingId: 'dailyLineChartLoading', errorId: 'dailyLineChartError', noDataId: 'dailyLineChartNoData', hasRendered: false },
+            'monthlyBarStatisticsSection': { render: fetchAndRenderMonthlyBarChart, chartInstance: () => monthlyBarChart, setInstance: (chart) => monthlyBarChart = chart, canvasId: 'monthlyBarChart', loadingId: 'monthlyBarChartLoading', errorId: 'monthlyBarChartError', noDataId: 'monthlyBarChartNoData', hasRendered: false },
+            'overallPercentageCumulativeStatisticsSection': { render: fetchAndRenderOverallPercentageCumulativeChart, chartInstance: () => overallPercentageCumulativeChart, setInstance: (chart) => overallPercentageCumulativeChart = chart, canvasId: 'overallPercentageCumulativeChart', loadingId: 'overallPercentageCumulativeChartLoading', errorId: 'overallPercentageCumulativeChartError', noDataId: 'overallPercentageCumulativeChartNoData', hasRendered: false },
+            'overallBalanceCumulativeStatisticsSection': { render: fetchAndRenderOverallBalanceCumulativeChart, chartInstance: () => overallBalanceCumulativeChart, setInstance: (chart) => overallBalanceCumulativeChart = chart, canvasId: 'overallBalanceCumulativeChart', loadingId: 'overallBalanceCumulativeChartLoading', errorId: 'overallBalanceCumulativeChartError', noDataId: 'overallBalanceCumulativeChartNoData', hasRendered: false },
+            'overallPipsCumulativeStatisticsSection': { render: fetchAndRenderOverallPipsCumulativeChart, chartInstance: () => overallPipsCumulativeChart, setInstance: (chart) => overallPipsCumulativeChart = chart, canvasId: 'overallPipsCumulativeChart', loadingId: 'overallPipsCumulativeChartLoading', errorId: 'overallPipsCumulativeChartError', noDataId: 'overallPipsCumulativeChartNoData', hasRendered: false },
+            'tradeFrequencyStatisticsSection': { render: fetchAndRenderTradeFrequencyChart, chartInstance: () => tradeFrequencyChart, setInstance: (chart) => tradeFrequencyChart = chart, canvasId: 'tradeFrequencyChart', loadingId: 'tradeFrequencyChartLoading', errorId: 'tradeFrequencyChartError', noDataId: 'tradeFrequencyChartNoData', hasRendered: false }
+        };
+
+        // --- SCROLL ANIMATION LOGIC ---
+        const animateOnScroll = () => {
+            const sections = document.querySelectorAll('.scroll-animate-section');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const sectionId = entry.target.id; const chartInfo = chartSections[sectionId];
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('scrolled-into-view');
+                        if (chartInfo && !chartInfo.hasRendered && chartInfo.canvasId) { chartInfo.render(); chartInfo.hasRendered = true; }
+                    } else {
+                        entry.target.classList.remove('scrolled-into-view');
+                        if (chartInfo && chartInfo.chartInstance && chartInfo.chartInstance()) { chartInfo.chartInstance().destroy(); chartInfo.setInstance(null); chartInfo.hasRendered = false; }
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.1 });
+            sections.forEach(section => observer.observe(section));
+        };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log("DOM Content Loaded. Initializing app...");
+            updateDateTime(); setInterval(updateDateTime, 1000);
+            
+            // Always try to initialize Firebase if config is provided
+            if (Object.keys(firebaseConfig).length > 0) {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                storage = getStorage(app);
+
+                // Authenticate
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        console.log("Authenticated with Firebase UID:", userId);
+                        // Load data after authentication
+                     await loadProfilePictures(userId); // Load multiple pictures
+                        await loadCalculatedPlans(userId); // Load calculated plans
+                        await loadRunningPlans(userId);   // Load running plans
+                        await loadExecutedPlans(userId); // This will set up real-time listener for executed
+                        // loadJoinTime is now handled by calculateSummaryStatistics
+                    } else {
+                        try {
+                            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(auth, initialAuthToken);
+                                console.log("Signed in with custom token.");
+                            } else {
+                                await signInAnonymously(auth);
+                                console.log("Signed in anonymously.");
+                            }
+                        } catch (error) {
+                            console.error("Firebase authentication error:", error);
+                        }
+                    }
+                });
+            } else {
+                console.warn("Firebase config not found. Running in standalone mode without cloud persistence.");
+                // If Firebase is not configured, still allow the app to run without cloud persistence
+                // The buttons will remain visible as their display style is no longer explicitly set to 'none' here.
+                // However, photo upload will still be hidden as it relies on Firebase Storage.
+                // addPhotoBtn.style.display = 'none'; // This button is now removed
+                loadPhotosFromLocalStorage(); // Load photos from local storage
+                loadDataFromLocalStorage(); // Load other data from local storage
+                renderCalculatedPlans();
+                renderRunningPlans();
+                renderExecutedPlans();
+                calculateSummaryStatistics(); // Call here to update join time from local data
+                updateRiskRewardStatistics();
+                checkTradeLimits();
+                displayLimitNotification(limitNotificationMessage);
+            }
+
+            if (calculatedPlansData.length === 0 && runningPlansData.length === 0 && executedPlansData.length === 0) {
+                console.log("No existing data found. Adding initial sample row.");
+                addInputRow({ symbol: 'EUR/USD', tradeType: 'BUY', balance: 5000, riskPercent: 0.5, priceNow: 1.08600, openPrice: 1.08500, slPrice: 1.08200, tpPrice: 1.09500, note: 'Contoh Catatan Trading' });
+                calculateAllRows(); saveDataToLocalStorage();
+            } else {
+                console.log("Existing data found. Re-rendering all plans.");
+                renderCalculatedPlans();
+                renderRunningPlans();
+                calculateAllRows(); // Recalculate based on input rows, which will update calculatedPlansData
+            }
+            renderPhotoGallery(); // Initial render of the photo gallery
+            animateOnScroll(); console.log("App initialization complete.");
+        });
+
+        window.exportToCsv = exportToCsv;
+        window.exportToPdf = exportToPdf;
+    </script>
+</body>
+</html>

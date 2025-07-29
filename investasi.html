@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Investasi Bunga Majemuk</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsPDF and html2canvas for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fcfcfc;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px; /* Keep some padding for overall content */
+            min-height: 100vh;
+        }
+        .container-wrapper {
+            background-color: #ffffff;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border-radius: 12px;
+            border: 1px solid #eeeeee;
+            padding: 1.5rem;
+            margin-top: 5rem; /* Adjusted margin-top for fixed header */
+            width: 100%; /* Full width */
+            max-width: 100%; /* Ensure it takes full available width */
+        }
+        .header-global {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.25rem 2rem; /* Increased padding for larger header */
+            background-color: rgba(255, 255, 255, 0.8); /* Transparent white background */
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e0e0e0; /* Light gray border */
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 50;
+            color: #333333; /* Black text */
+            font-size: 0.8rem; /* Slightly larger font size for header text */
+        }
+        .header-global a {
+            color: #333333; /* Black text for links */
+        }
+        /* Responsive adjustments for header on small screens */
+        @media (max-width: 640px) { /* Tailwind's 'sm' breakpoint */
+            .header-global {
+                padding: 1rem 1.25rem; /* Adjusted padding for very small screens */
+                font-size: 0.7rem; /* Adjusted font size for very small screens */
+            }
+            .header-global .flex.items-center.gap-4 {
+                gap: 0.75rem; /* Adjusted gap between header links */
+            }
+            .header-global .absolute {
+                display: none; /* Hide date/time on very small screens to prevent overlap */
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            justify-content: flex-end; /* Align items to the bottom */
+        }
+        .input-field {
+            border: 1px solid #e0e0e0;
+            background-color: #ffffff;
+            color: #333;
+            border-radius: 6px;
+            padding: 0.55rem 0.8rem;
+            font-size: 0.75rem;
+            width: 100%;
+        }
+        .input-label {
+            color: #5a5a5a;
+            font-weight: 500;
+            font-size: 0.75rem;
+        }
+        .button-green {
+            background-color: #222222;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .button-green:hover {
+            background-color: #3a3a3a;
+        }
+        .button-light {
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .button-light:hover {
+            background-color: #d0d0d0;
+        }
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+        }
+        .results-table th, .results-table td {
+            border: 1px solid #e0e0e0;
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.75rem;
+        }
+        .results-table th {
+            background-color: #f0f0f0;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+        }
+        .results-table td {
+            background-color: #ffffff;
+            color: #555;
+        }
+        .results-table .year-row th {
+            background-color: #e8e8e8;
+            font-weight: 700;
+            color: #222;
+        }
+        .net-profit-cell {
+            background-color: #eafaea;
+            font-weight: 600;
+            color: #28a745;
+        }
+        .text-primary { color: #2a2a2a; }
+        .info-section {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            text-align: left; /* Align text to left for readability */
+        }
+        .info-section h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #2a2a2a;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e8e8e8;
+            padding-bottom: 0.5rem;
+        }
+        .info-section h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #333;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .info-section p {
+            font-size: 0.875rem;
+            font-weight: 300;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+        }
+        .info-section ul {
+            list-style-type: disc;
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .info-section ul li {
+            font-size: 0.875rem;
+            font-weight: 300;
+            color: #555;
+            margin-bottom: 0.5rem;
+        }
+        .info-section strong {
+            font-weight: 500;
+            color: #333;
+        }
+        /* New style for Future Value display */
+        .future-value-display {
+            background-color: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 1rem;
+            font-weight: 300;
+            color: #333;
+        }
+        .future-value-display span {
+            font-size: 1.25rem;
+            font-weight: 300;
+            color: #2a2a2a;
+        }
+        /* Style for the download button */
+        .download-button {
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 300;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+        .download-button:hover {
+            background-color: #d0d0d0;
+        }
+        /* Style for input values in PDF */
+        .pdf-input-values {
+            font-size: 0.8rem;
+            color: #555;
+            margin-bottom: 1rem;
+            text-align: left;
+            padding: 0.5rem;
+            border-bottom: 1px dashed #eee;
+        }
+        .pdf-input-values p {
+            margin-bottom: 0.2rem;
+        }
+        .pdf-input-values strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <!-- Global Header for the entire page (fixed at top) -->
+    <div class="header-global">
+        <div class="flex items-center gap-4">
+            <span class="font-light">Investasi</span>
+        </div>
+        <div class="text-center absolute left-1/2 -translate-x-1/2">
+            <span id="currentDateHeader"></span>
+            <span id="currentTimeHeader"></span>
+        </div>
+        <div class="flex items-center gap-4">
+            <a href="beranda.html" class="font-light hover:underline">Beranda</a>
+            <a href="investasi.html" class="font-light hover:underline">Investasi</a>
+        </div>
+    </div>
+
+    <div class="container-wrapper" id="calculatorContainer">
+        <h1 class="text-2xl font-light text-primary mb-6">Kalkulator Investasi Bunga Majemuk</h1>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8" id="inputSection">
+            <div class="input-group">
+                <label for="investmentAmount" class="input-label">Jumlah Investasi Awal (USD)</label>
+                <input type="number" id="investmentAmount" class="input-field" value="100000" placeholder="Cth: 100,000">
+            </div>
+            <div class="input-group">
+                <label for="periodYears" class="input-label">Periode (Tahun)</label>
+                <input type="number" id="periodYears" class="input-field" value="5" placeholder="Cth: 5">
+            </div>
+            <div class="input-group">
+                <label for="riskPerTradePercentage" class="input-label">Risk Per Trade (%)</label>
+                <input type="number" id="riskPerTradePercentage" class="input-field" value="1" step="0.01" placeholder="Cth: 1">
+            </div>
+            <div class="input-group">
+                <label for="monthlyReturn" class="input-label">Pengembalian Bulanan yang Diharapkan (%)</label>
+                <input type="number" id="monthlyReturn" class="input-field" value="0.5" step="0.01" placeholder="Cth: 0.5">
+            </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-8">
+            <button id="resetBtn" class="button-light flex-1">Reset</button>
+            <button id="calculateBtn" class="button-green flex-1">Hitung</button>
+        </div>
+
+        <div class="future-value-display mb-8">
+            <span>Nilai Masa Depan:</span>
+            <span id="futureValue">USD 0</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Tahun/Bulan</th>
+                        <th colspan="12">Bulan</th>
+                        <th rowspan="2">Nett Profit (Total)</th>
+                    </tr>
+                    <tr>
+                        <th>Jan</th><th>Feb</th><th>Mar</th><th>Apr</th><th>Mei</th><th>Jun</th><th>Jul</th><th>Agu</th><th>Sep</th><th>Okt</th><th>Nov</th><th>Des</th>
+                    </tr>
+                </thead>
+                <tbody id="resultsTableBody">
+                    <!-- Results will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Download PDF Button -->
+        <button id="downloadPdfBtn" class="download-button">Unduh PDF</button>
+
+    </div>
+
+    <!-- New section for the provided text content -->
+    <section class="info-section container-wrapper mt-8">
+        <h2 class="text-xl font-medium text-primary mb-4">Keajaiban Bunga Majemuk dalam Investasi</h2>
+        <p class="text-base font-light text-gray-700 leading-relaxed mb-4">
+            Jika Anda bertanya kepada Warren Buffett, apa faktor yang paling kuat di belakang kesuksesannya, dia akan menjawab ‘compound interest’ – tanpa ragu. Albert Einstein menyebut Compound Interest sebagai ‘penemuan matematika terbesar sepanjang masa’. Tidak seperti pelajaran kalkulus yang Anda pelajari, compounding interest bisa diterapkan dalam kehidupan sehari-hari.
+        </p>
+        <p class="text-base font-light text-gray-700 leading-relaxed mb-4">
+            Keajaiban compounding interest dalam investasi mampu mengubah uang Anda menjadi sebuah alat luar biasa dalam menghasilkan lebih banyak uang. Dalam konsep investasi compounding interest: Anda menumbuh-kembangkan uang Anda melalui investasi untuk mendapatkan keuntungan (laba). Anda dapat membuat uang Anda tumbuh lebih cepat jika Anda juga menginvestasikan kembali laba yang sudah Anda peroleh bersama dengan modal awal Anda.
+        </p>
+        <h3 class="text-lg font-semibold text-gray-800 mb-3">Simulasi Contoh</h3>
+        <p class="text-base font-light text-gray-700 leading-relaxed mb-4">
+            Sebagai simulasi, mari kita lihat contoh berikut:
+        </p>
+        <p class="text-base font-light text-gray-700 leading-relaxed mb-4">
+            Jika pada hari ini Anda menginvestasikan uang sebesar IDR 100 juta dengan bunga / laba 6% per tahun, maka di akhir tahun Anda akan mempunyai IDR 106 juta, laba Anda IDR 6 juta. Jika Anda tidak menarik bunga nya, dan menginvestasikannya kembali untuk 1 tahun kedepan, maka tahun berikutnya Anda akan mendapatkan IDR 112,360 juta ( 106 juta x 1.06 ).
+        </p>
+    </section>
+
+    <footer class="w-full py-4 text-center text-gray-700 text-sm font-light mt-8">
+        Leodra Sint | Think like a dealer, not like a player.
+    </footer>
+
+    <script>
+        // Fungsi untuk memformat angka menjadi format mata uang Dolar AS
+        function formatUSD(amount) {
+            if (isNaN(amount) || amount === null) return 'USD 0';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+
+        // Fungsi untuk memformat angka dengan 'K' untuk ribuan
+        function formatK(num) {
+            if (isNaN(num) || num === null || !isFinite(num)) {
+                return '-'; // Return '-' for invalid/empty numbers
+            }
+            if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+        // Fungsi untuk memformat nilai Lot (dengan 2 desimal)
+        function formatLot(num) {
+            if (isNaN(num) || num === null || !isFinite(num)) {
+                return '-';
+            }
+            return num.toFixed(2);
+        }
+
+        // Fungsi untuk memformat rata-rata trade berhasil (tanpa desimal)
+        function formatAvgTrades(num) {
+            if (isNaN(num) || num === null || !isFinite(num) || num < 0) {
+                return '-';
+            }
+            return Math.round(num).toString(); // Menggunakan Math.round untuk menghilangkan desimal
+        }
+
+        // Fungsi untuk memperbarui tanggal dan waktu di header
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            document.getElementById('currentDateHeader').textContent = now.toLocaleDateString('id-ID', dateOptions);
+            document.getElementById('currentTimeHeader').textContent = now.toLocaleTimeString('id-ID', timeOptions);
+        }
+
+        // Fungsi untuk mengunduh konten sebagai PDF
+        async function exportToPdf(elementId, filename) {
+            const calculatorContainer = document.getElementById(elementId);
+            const inputSection = document.getElementById('inputSection');
+            const buttonsSection = calculatorContainer.querySelector('.flex.flex-col.sm\\:flex-row.gap-4.mb-8');
+            const downloadButton = document.getElementById('downloadPdfBtn');
+
+            if (!calculatorContainer || !inputSection || !buttonsSection || !downloadButton) {
+                console.error('One or more elements not found for PDF export.');
+                return;
+            }
+
+            // Show loading indicator
+            const loadingDiv = document.createElement('div');
+            loadingDiv.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:white;padding:20px;border-radius:10px;z-index:1000;';
+            loadingDiv.textContent = 'Membuat PDF...';
+            document.body.appendChild(loadingDiv);
+
+            // Capture input values before hiding the section
+            const investmentAmount = document.getElementById('investmentAmount').value;
+            const periodYears = document.getElementById('periodYears').value;
+            const riskPerTradePercentage = document.getElementById('riskPerTradePercentage').value;
+            const monthlyReturn = document.getElementById('monthlyReturn').value;
+
+            // Create a div to display input values in the PDF
+            const inputValuesDiv = document.createElement('div');
+            inputValuesDiv.classList.add('pdf-input-values');
+            inputValuesDiv.innerHTML = `
+                <p><strong>Input Kalkulator:</strong></p>
+                <p>Jumlah Investasi Awal: ${formatUSD(parseFloat(investmentAmount))}</p>
+                <p>Periode: ${periodYears} Tahun</p>
+                <p>Risk Per Trade: ${riskPerTradePercentage}%</p>
+                <p>Pengembalian Bulanan yang Diharapkan: ${monthlyReturn}%</p>
+                <br>
+            `;
+            // Insert the div at the beginning of the calculator container
+            calculatorContainer.prepend(inputValuesDiv);
+
+            // Temporarily hide the input section, buttons section, and download button
+            inputSection.style.display = 'none';
+            buttonsSection.style.display = 'none';
+            downloadButton.style.display = 'none';
+
+
+            try {
+                const canvas = await html2canvas(calculatorContainer, { scale: 2 });
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4');
+
+                const imgWidth = 210;
+                const pageHeight = 297;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                let heightLeft = imgHeight;
+                let position = 0;
+
+                pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                pdf.save(filename);
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+                alert('Gagal membuat PDF: ' + error.message);
+            } finally {
+                // Hide loading indicator
+                document.body.removeChild(loadingDiv);
+                // Restore the visibility of the input section, buttons section, and download button
+                inputSection.style.display = 'grid';
+                buttonsSection.style.display = 'flex';
+                downloadButton.style.display = 'block';
+                // Remove the temporary input values div
+                calculatorContainer.removeChild(inputValuesDiv);
+            }
+        }
+
+
+        // Event listener untuk DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDateTime();
+            setInterval(updateDateTime, 1000);
+
+            const investmentAmountInput = document.getElementById('investmentAmount');
+            const periodYearsInput = document.getElementById('periodYears');
+            const riskPerTradePercentageInput = document.getElementById('riskPerTradePercentage');
+            const monthlyReturnInput = document.getElementById('monthlyReturn');
+            const calculateBtn = document.getElementById('calculateBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const futureValueSpan = document.getElementById('futureValue');
+            const resultsTableBody = document.getElementById('resultsTableBody');
+            const downloadPdfBtn = document.getElementById('downloadPdfBtn');
+
+            // Fungsi untuk menghitung bunga majemuk
+            function calculateCompoundInterest() {
+                let initialInvestment = parseFloat(investmentAmountInput.value);
+                let currentBalance = initialInvestment;
+                const periodYears = parseInt(periodYearsInput.value);
+                const riskPerTradePercentage = parseFloat(riskPerTradePercentageInput.value);
+                const monthlyReturn = parseFloat(monthlyReturnInput.value) / 100;
+
+                if (isNaN(initialInvestment) || isNaN(periodYears) || isNaN(riskPerTradePercentage) || isNaN(monthlyReturn) || initialInvestment <= 0 || periodYears <= 0 || riskPerTradePercentage <= 0 || monthlyReturn < 0) {
+                    alert('Mohon masukkan nilai yang valid untuk semua bidang.');
+                    return;
+                }
+
+                resultsTableBody.innerHTML = '';
+
+                const today = new Date();
+                const startMonthIndex = today.getMonth();
+                const startYear = today.getFullYear();
+
+                const conceptualPipValuePerLot = 10;
+                const conceptualStopLossPips = 100;
+
+                for (let yearOffset = 0; yearOffset < periodYears; yearOffset++) {
+                    const displayYear = startYear + yearOffset;
+                    
+                    const yearRow = document.createElement('tr');
+                    yearRow.classList.add('year-row');
+                    yearRow.innerHTML = `<th colspan="14" class="py-2 px-4 text-left">${displayYear}</th>`;
+                    resultsTableBody.appendChild(yearRow);
+
+                    const usdRow = document.createElement('tr');
+                    usdRow.innerHTML = `<th>USD</th>`;
+                    
+                    const lotRow = document.createElement('tr');
+                    lotRow.innerHTML = `<th>Lot</th>`;
+
+                    const avgTradesRow = document.createElement('tr');
+                    avgTradesRow.innerHTML = `<th>Rata-rata Trade Berhasil</th>`;
+
+                    for (let monthInYear = 0; monthInYear < 12; monthInYear++) {
+                        let monthBalance;
+                        let calculatedLot;
+                        let avgTradesNeeded;
+
+                        if (yearOffset === 0 && monthInYear < startMonthIndex) {
+                            monthBalance = initialInvestment;
+                            calculatedLot = '-';
+                            avgTradesNeeded = '-';
+                        } else {
+                            currentBalance *= (1 + monthlyReturn);
+                            monthBalance = currentBalance;
+                            
+                            const riskAmountPerTrade = currentBalance * (riskPerTradePercentage / 100);
+                            calculatedLot = riskAmountPerTrade / (conceptualPipValuePerLot * conceptualStopLossPips);
+                            if (isNaN(calculatedLot) || !isFinite(calculatedLot) || calculatedLot < 0) {
+                                calculatedLot = 0;
+                            }
+                            
+                            const targetMonthlyProfit = currentBalance * monthlyReturn;
+                            const profitPerTrade = riskAmountPerTrade;
+                            
+                            if (profitPerTrade > 0) {
+                                avgTradesNeeded = targetMonthlyProfit / profitPerTrade;
+                            } else {
+                                avgTradesNeeded = 0;
+                            }
+                            if (isNaN(avgTradesNeeded) || !isFinite(avgTradesNeeded) || avgTradesNeeded < 0) {
+                                avgTradesNeeded = 0;
+                            }
+                        }
+
+                        usdRow.innerHTML += `<td>${formatK(monthBalance)}</td>`;
+                        lotRow.innerHTML += `<td>${formatLot(calculatedLot)}</td>`;
+                        avgTradesRow.innerHTML += `<td>${formatAvgTrades(avgTradesNeeded)}</td>`;
+                    }
+
+                    usdRow.innerHTML += `<td class="net-profit-cell">${formatUSD(currentBalance)}</td>`;
+                    lotRow.innerHTML += `<td class="net-profit-cell"></td>`;
+                    avgTradesRow.innerHTML += `<td class="net-profit-cell"></td>`;
+
+                    resultsTableBody.appendChild(usdRow);
+                    resultsTableBody.appendChild(lotRow);
+                    resultsTableBody.appendChild(avgTradesRow);
+                }
+
+                futureValueSpan.textContent = formatUSD(currentBalance);
+            }
+
+            // Fungsi untuk mereset input dan hasil
+            function resetCalculator() {
+                investmentAmountInput.value = '100000';
+                periodYearsInput.value = '5';
+                riskPerTradePercentageInput.value = '1';
+                monthlyReturnInput.value = '0.5';
+                futureValueSpan.textContent = 'USD 0';
+                resultsTableBody.innerHTML = '';
+            }
+
+            // Event listener untuk tombol hitung
+            calculateBtn.addEventListener('click', calculateCompoundInterest);
+
+            // Event listener untuk tombol reset
+            resetBtn.addEventListener('click', resetCalculator);
+
+            // Event listener for Download PDF button
+            downloadPdfBtn.addEventListener('click', () => {
+                exportToPdf('calculatorContainer', `Kalkulator_Investasi_Bunga_Majemuk_${new Date().toISOString().slice(0, 10)}.pdf`);
+            });
+
+            // Hitung saat halaman pertama kali dimuat dengan nilai default
+            calculateCompoundInterest();
+        });
+    </script>
+</body>
+</html>
